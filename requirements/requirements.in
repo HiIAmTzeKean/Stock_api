@@ -9,7 +9,9 @@ python-dotenv
 gitpython
 is-safe-url
 psycopg2-binary
+lxml
 matplotlib
+mplfinance
 pandas
 numpy
 gunicorn
