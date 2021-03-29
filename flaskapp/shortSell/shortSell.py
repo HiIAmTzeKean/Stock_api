@@ -29,55 +29,13 @@ def saveShortSell(date=datetime.date.today()): # date has to be in datetime form
     record = shortReport(date,json.dumps(d))
     db.session.add(record)
     db.session.commit()
-  except: print(date)
+  except:
+    print(date)
 
-scheduler.add_job(func=saveShortSell, trigger="date", run_date=datetime.date.today(), args=[datetime.date.today()])
 
-#temp for set up
-@shortSell_bp.route('/shortSellScheduler', methods=('GET', 'POST'))
-def shortSellScheduler():
-  date = datetime.date.today()
-  last_date = db.session.query(shortReport.date).order_by(shortReport.date.desc()).first()[0]
-  while last_date + datetime.timedelta(days=1) < date:
-    last_date = last_date + datetime.timedelta(days=1)
-    saveShortSell(date)
-  # date_last = datetime.datetime.strptime('2020-12-17', "%Y-%m-%d").date()
-  # date_end = datetime.date.today()
-  # datelist = db.session.query(shortReport.date).order_by(shortReport.date.asc()).all()
-  # datelist2 = []
-  # for i in datelist:
-  #   datelist2.append(i.date)
-  # while date_last<date_end:
-  #   if date_last in datelist2:
-  #     pass
-  #   else:
-  #     saveShortSell(date_last)
-  #   date_last = date_last + datetime.timedelta(days=1)
-  return 'h'
-
-# creating once to generate the ticker
-@shortSell_bp.route('/shortSellTickerCreator', methods=('GET', 'POST'))
-def shortSellTickerCreator():
+def savePrice(ticker_fk):
   import pandas as pd
-  import pathlib
-  
-  filename = '\SGXsymbol.txt'
-  c=pd.read_csv(str(pathlib.Path().absolute()) + filename, delimiter = "\t")
-
-  for i in range(len(c)):
-    record = stockTicker(name=c.iloc[i]['Description'], ticker=c.iloc[i]['Symbol'])
-    db.session.add(record)
-    db.session.commit()
-  return (str(pathlib.Path().absolute()) + filename)
-
-
-# getting price for a specific ticker now
-@shortSell_bp.route('/shortSellGetPrice', methods=('GET', 'POST'))
-def shortSellGetPrice():
-  import pandas as pd
-  ticker_fk = 'BS6.SI'
-
-  url = 'https://sg.finance.yahoo.com/quote/BS6.SI/history?p=BS6.SI&.tsrc=fin-srch'
+  url = db.session.query(stockTicker.website).filter_by(ticker=ticker_fk).scalar()
   c=pd.read_html(url)[0][:-1]
   c['Date'] = pd.to_datetime(c['Date'])
 
@@ -88,7 +46,6 @@ def shortSellGetPrice():
     try:
       float(c.iloc[i]['Open'])
       if c['Date'][i]<=last_date:
-        print(c['Date'][i])
         break
     except ValueError:
       continue
@@ -99,8 +56,36 @@ def shortSellGetPrice():
                         c.iloc[i]['Low'],
                         c.iloc[i]['Close*'],
                         c.iloc[i]['Volume'])
-    #db.session.add(record)
-    #db.session.commit()
+    db.session.add(record)
+  db.session.commit()
+  return
+
+
+def savePrices(tickerList):
+  for ticker in tickerList:
+    savePrice(ticker)
+
+
+def get_tickerList():
+  lt = db.session.query(stockTicker.ticker).filter(stockTicker.website.isnot(None)).all()
+  return [item for t in lt for item in t]
+
+
+# populate DB with the missing short dates
+@shortSell_bp.route('/shortSellScheduler', methods=('GET', 'POST'))
+def shortSellScheduler():
+  date = datetime.date.today()
+  last_date = db.session.query(shortReport.date).order_by(shortReport.date.desc()).first()[0]
+  while last_date + datetime.timedelta(days=1) < date:
+    last_date = last_date + datetime.timedelta(days=1)
+    saveShortSell(last_date)
+  return 'h'
+
+
+# getting price for a specific ticker now
+@shortSell_bp.route('/shortSellGetPrice/<ticker_fk>', methods=('GET', 'POST'))
+def shortSellGetPrice(ticker_fk):
+  savePrice(ticker_fk)
   return 'Done'
 
 # view graph
@@ -111,10 +96,9 @@ def shortSellViewer():
   import base64
   from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
   from matplotlib.figure import Figure
-  import matplotlib.dates as mpl_dates
   import mplfinance as mpf
-  import matplotlib.pyplot as plt
   from matplotlib.ticker import MultipleLocator
+  import matplotlib.pyplot as plt
   import json
 
   # choosing the stock I want to see
@@ -144,44 +128,32 @@ def shortSellViewer():
       data.append(dict(zip(columns, values)))
   df2 = df2.append(data, True)
 
-
-  #test
+  # normal plot
   df2['Date'] = pd.to_datetime(df2['Date'],format = '%Y-%m-%d')
   df2.sort_values(by=['Date'], ascending=True, inplace=True)
-  fig = mpf.figure(figsize=(15,10))
+  df2 = df2[df2['Date']>pd.to_datetime('2020-12-07',format = '%Y-%m-%d')]
+  fig = mpf.figure(figsize=(15,15))
   ax = fig.add_subplot(3,1,1)
   ax2 = fig.add_subplot(3, 1, 2, sharex = ax) 
-  mpf.plot(df2.set_index('Date'), type='candle',mav=(3,6,9), ax=ax, volume=ax2)
+  mpf.plot(df2.set_index('Date'), type='candle',mav=(3,6,9), ax=ax, volume=ax2, show_nontrading=True)
+  ax.xaxis.set_major_locator(MultipleLocator(7))
+  ax2.xaxis.set_major_locator(MultipleLocator(7))
+  ax2.yaxis.set_major_locator(MultipleLocator(20*1000000))
+  plt.xticks(rotation=90)
 
+  # short volume
   ax3 = fig.add_subplot(3, 1, 3)
   df['Date'] = pd.to_datetime(df['Date'],format = '%Y-%m-%d')
+  df['Date'] = df['Date'] - pd.DateOffset(1)
   df2 = df2.merge(df, how='left', on='Date')
   df2.sort_values(by=['Date'], ascending=True, inplace=True)
   df2.drop(['Volume', 'ShortSaleValues'], axis=1, inplace=True)
   df2.rename(columns={"ShortSaleVolume": "Volume"}, inplace=True)
-  print(df2)
-  mpf.plot(df2.set_index('Date'), type='candle',ax=ax3, volume=ax3)
-  # result=10/0
-  # ax3.plot(df['Date'], df['ShortSaleValues'], "r-")
-
-  # Generate plot
-  # fig = Figure(figsize=(15,10))
-  # axis = fig.add_subplot(2, 1, 1)
-  # axis2 = fig.add_subplot(2, 1, 2, sharex = axis)
-  # candlestick_ohlc(axis, df2.values, width=0.6, colorup='green', colordown='red', alpha=0.8)
-  # axis.set_title("YZJ Shipbldg SGD")
-  # axis.set_xlabel("Date")
-  # axis.set_ylabel("Price")
-  # axis.grid()
-
-  # axis2.plot(df['Date'], df['ShortSaleValues'], "r-")
-  # axis2.plot(df2['Date'], df2['Volume']/40, "b-")
-  # axis2.grid()
-
-  #date_format = mpl_dates.DateFormatter('%d-%m-%Y')
-  #axis.xaxis.set_major_locator(MultipleLocator(5))
-  #axis.xaxis.set_major_formatter(date_format)
-  #fig.autofmt_xdate()
+  # print(df2.iloc[-10:-1])
+  mpf.plot(df2.set_index('Date'), type='candle',ax=ax3, volume=ax3,show_nontrading=True)
+  ax3.xaxis.set_major_locator(MultipleLocator(7))
+  ax3.yaxis.set_major_locator(MultipleLocator(2*1000000))
+  plt.xticks(rotation=90)
 
   # Convert plot to PNG image
   pngImage = io.BytesIO()
@@ -192,3 +164,7 @@ def shortSellViewer():
   pngImageB64String += base64.b64encode(pngImage.getvalue()).decode('utf8')
 
   return render_template('shortSellViewer.html', name = 'new_plot', myimage=pngImageB64String)
+
+
+scheduler.add_job(func=saveShortSell, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[datetime.date.today()])
+scheduler.add_job(func=savePrices, trigger="date", run_date=datetime.date.today()+ datetime.timedelta(days=1), args=[get_tickerList()])

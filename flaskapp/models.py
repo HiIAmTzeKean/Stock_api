@@ -22,6 +22,7 @@ class stockTicker(db.Model):
     __table_args__ = (db.UniqueConstraint('name', 'ticker'),)
     name = db.Column(db.String, nullable=False)
     ticker = db.Column(db.String, nullable=False, primary_key=True)
+    website = db.Column(db.String, nullable=True)
 
     prices = db.relationship('stockPrice', back_populates='ticker', cascade="all, delete", passive_deletes=True)
 
