@@ -110,6 +110,3 @@ werkzeug==1.0.1
     # via flask
 wtforms==2.3.3
     # via flask-wtf
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
