@@ -137,5 +137,5 @@ cython_debug/
 
 # VScode
 .vscode/
-
+.env
 migrations/
