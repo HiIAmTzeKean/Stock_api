@@ -68,7 +68,7 @@ numpy==1.19.5
     #   -r requirements.in
     #   matplotlib
     #   pandas
-pandas==1.2.3
+pandas==1.1.5
     # via
     #   -r requirements.in
     #   mplfinance
