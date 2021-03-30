@@ -5,6 +5,7 @@ import json
 
 
 class shortReport(db.Model):
+    __table_args__ = (db.UniqueConstraint('date'),)
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
     stocks = db.Column(JSON, nullable=False)

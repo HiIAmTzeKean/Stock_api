@@ -12,7 +12,7 @@ def saveShortSell(date=datetime.date.today()):  # date has to be in datetime for
     import urllib
     import pandas as pd
     import json
-    year, month, day = str(date.year), str(date.month), str(date.day-1)
+    year, month, day = str(date.year), str(date.month), str(date.day)
     if len(month) == 1:
         month = month.zfill(2)
     if len(day) == 1:
@@ -26,16 +26,18 @@ def saveShortSell(date=datetime.date.today()):  # date has to be in datetime for
             reader.readline()
             c = pd.read_fwf(reader, skipfooter=4, engine='python')
             c.drop(columns=['Curr'], inplace=True)
-
+        c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
+        c['ShortSaleValue'] = pd.to_numeric(c['ShortSaleValue'], errors='coerce')
         d = dict()
         for i in range(len(c)):
-            d[c.iloc[i]['Security']] = [
-                float(c.iloc[i]['ShortSaleVolume']), float(c.iloc[i]['ShortSaleValue'])]
+            d[c.iloc[i]['Security']] = [float(c.iloc[i]['ShortSaleVolume']),
+                                        float(c.iloc[i]['ShortSaleValue'])]
         record = shortReport(date, json.dumps(d))
         db.session.add(record)
         db.session.commit()
-    except:
-        print(date)
+    except Exception as e:
+        # print(date, e)
+        return
 
 
 def savePrice(ticker_fk):
@@ -83,9 +85,11 @@ def get_tickerList():
 @shortSell_bp.route('/shortSellScheduler', methods=('GET', 'POST'))
 def shortSellScheduler():
     date = datetime.date.today()
-    last_date = db.session.query(shortReport.date).order_by(
-        shortReport.date.desc()).first()[0]
-    while last_date + datetime.timedelta(days=1) < date:
+    #last_date = db.session.query(shortReport.date).order_by(
+    #    shortReport.date.desc()).first()[0]
+    last_date = date - datetime.timedelta(days=90)
+    while last_date + datetime.timedelta(days=1) <= date:
+        print(last_date)
         last_date = last_date + datetime.timedelta(days=1)
         saveShortSell(last_date)
     return 'h'
@@ -98,8 +102,6 @@ def shortSellGetPrice(ticker_fk):
     return 'Done'
 
 # view graph
-
-
 @shortSell_bp.route('/shortSellViewer', methods=('GET', 'POST'))
 def shortSellViewer():
     import pandas as pd
@@ -135,7 +137,6 @@ def shortSellViewer():
     data = []
 
     records = db.session.query(stockPrice).filter_by(ticker_fk=ticker).all()
-    print(db.session.query(stockPrice).filter_by(ticker_fk='BS6.SI').all())
     for record in records:
         values = [record.date, record.openPrice, record.highPrice,
                   record.lowPrice, record.closePrice, record.volume]
@@ -159,7 +160,7 @@ def shortSellViewer():
     # short volume
     ax3 = fig.add_subplot(3, 1, 3)
     df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-    df['Date'] = df['Date'] - pd.DateOffset(1)
+    df['Date'] = df['Date']
     df2 = df2.merge(df, how='left', on='Date')
     df2.sort_values(by=['Date'], ascending=True, inplace=True)
     df2.drop(['Volume', 'ShortSaleValues'], axis=1, inplace=True)
