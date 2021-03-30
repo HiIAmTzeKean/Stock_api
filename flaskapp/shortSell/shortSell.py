@@ -1,4 +1,7 @@
 import datetime
+from urllib.error import HTTPError
+from sqlalchemy.exc import IntegrityError,InvalidRequestError
+import psycopg2
 from flask import (Blueprint, flash, g, make_response, redirect,
                    render_template, request, session, url_for)
 from flaskapp import db, scheduler
@@ -11,7 +14,6 @@ shortSell_bp = Blueprint('shortSell', __name__,
 def saveShortSell(date=datetime.date.today()):  # date has to be in datetime format
     import urllib
     import pandas as pd
-    import json
     year, month, day = str(date.year), str(date.month), str(date.day)
     if len(month) == 1:
         month = month.zfill(2)
@@ -21,22 +23,22 @@ def saveShortSell(date=datetime.date.today()):  # date has to be in datetime for
     url = "https://api2.sgx.com/sites/default/files/reports/short-sell/{0}/{1}/website_DailyShortSell{0}{1}{2}1815.txt".format(
         year, month, day)
     try:
-        # format data into JSON
         with urllib.request.urlopen(url) as reader:
             reader.readline()
             c = pd.read_fwf(reader, skipfooter=4, engine='python')
             c.drop(columns=['Curr'], inplace=True)
         c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
         c['ShortSaleValue'] = pd.to_numeric(c['ShortSaleValue'], errors='coerce')
+        c = c.dropna()
         d = dict()
         for i in range(len(c)):
             d[c.iloc[i]['Security']] = [float(c.iloc[i]['ShortSaleVolume']),
                                         float(c.iloc[i]['ShortSaleValue'])]
-        record = shortReport(date, json.dumps(d))
+        record = shortReport(date, d)
         db.session.add(record)
         db.session.commit()
-    except Exception as e:
-        # print(date, e)
+    except (IntegrityError , HTTPError, InvalidRequestError) as e:
+        print(date, e)
         return
 
 
@@ -85,11 +87,10 @@ def get_tickerList():
 @shortSell_bp.route('/shortSellScheduler', methods=('GET', 'POST'))
 def shortSellScheduler():
     date = datetime.date.today()
-    #last_date = db.session.query(shortReport.date).order_by(
-    #    shortReport.date.desc()).first()[0]
-    last_date = date - datetime.timedelta(days=90)
+    last_date = db.session.query(shortReport.date).order_by(
+        shortReport.date.desc()).first()[0]
+    # last_date = date - datetime.timedelta(days=90)
     while last_date + datetime.timedelta(days=1) <= date:
-        print(last_date)
         last_date = last_date + datetime.timedelta(days=1)
         saveShortSell(last_date)
     return 'h'
@@ -122,11 +123,9 @@ def shortSellViewer():
     df = pd.DataFrame(columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
     columns = list(df)
     data = []
-
-    records = db.session.query(shortReport).all()
+    records = db.session.query(shortReport.stocks[stock],shortReport.date).all()
     for record in records:
-        stockList = json.loads(record.stocks)
-        values = [record.date, stockList[stock][0], stockList[stock][1]]
+        values = [record.date, record[0][0], record[0][1]]
         data.append(dict(zip(columns, values)))
     df = df.append(data, True)
 

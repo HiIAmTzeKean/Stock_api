@@ -10,6 +10,8 @@ initialiser_bp = Blueprint('initialiser', __name__,
 
 @initialiser_bp.route('/initialiserHome', methods=('GET', 'POST'))
 def initialiserHome():
+    records = db.session.query(shortReport.stocks['YZJ Shipbldg SGD'],shortReport.date).first()
+    print(records[0])
     return render_template('initialiserHome.html')
 
 

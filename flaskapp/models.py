@@ -1,6 +1,6 @@
 from flaskapp import db
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, JSONB
 import json
 
 
@@ -8,7 +8,7 @@ class shortReport(db.Model):
     __table_args__ = (db.UniqueConstraint('date'),)
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
-    stocks = db.Column(JSON, nullable=False)
+    stocks = db.Column(JSONB, nullable=False)
 
     def __init__(self, date, stocks):
         self.date = date
@@ -36,7 +36,6 @@ class stockTicker(db.Model):
         return '<Record {} {}>'.format(self.name, self.ticker)
 
 class stockPrice(db.Model):
-    
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
     openPrice = db.Column(db.Float, nullable=False)
