@@ -17,6 +17,10 @@ class shortReport(db.Model):
         return '<Short record {}>'.format(self.date)
 
 class stockTicker(db.Model):
+    __table_args__ = (
+        # this can be db.PrimaryKeyConstraint if you want it to be a primary key
+        db.UniqueConstraint('name', 'ticker'),
+      )
     name = db.Column(db.String, nullable=False)
     ticker = db.Column(db.String, primary_key=True)
     website = db.Column(db.String)
@@ -31,6 +35,7 @@ class stockTicker(db.Model):
         return '<Record {} {}>'.format(self.name, self.ticker)
 
 class stockPrice(db.Model):
+    
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
     openPrice = db.Column(db.Float, nullable=False)
@@ -40,7 +45,7 @@ class stockPrice(db.Model):
     volume = db.Column(db.Float, nullable=False)
 
     tickers = db.relationship('stockTicker', back_populates='prices')
-    ticker = db.Column(db.String, db.ForeignKey('stock_ticker.ticker', ondelete="CASCADE"))
+    ticker_fk = db.Column(db.String, db.ForeignKey('stock_ticker.ticker', ondelete="CASCADE"))
 
     def __init__(self, date, ticker_fk, openPrice, highPrice, lowPrice, closePrice, volume):
         self.date = date
@@ -54,3 +59,11 @@ class stockPrice(db.Model):
 
     def __repr__(self):
         return '<Price {} {}>'.format(self.date, self.ticker_fk)
+
+
+class Users(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    def __init__(self):
+        pass
+    

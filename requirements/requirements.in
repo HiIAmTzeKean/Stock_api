@@ -1,5 +1,4 @@
 # requirements.in
-# requirements.in
 flask
 flask-script
 flask_sqlalchemy

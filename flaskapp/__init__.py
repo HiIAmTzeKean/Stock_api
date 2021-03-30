@@ -31,9 +31,9 @@ scheduler = BackgroundScheduler()
 # import models 
 from flaskapp import models
 
-#from .shortSell import shortSell
-#app.register_blueprint(shortSell.shortSell_bp)
+from .shortSell import shortSell
+app.register_blueprint(shortSell.shortSell_bp)
 
-#from .initialiser import initialiser
-#app.register_blueprint(initialiser.initialiser_bp)
-#app.add_url_rule('/', endpoint='initialiser.initialiserHome')
+from .initialiser import initialiser
+app.register_blueprint(initialiser.initialiser_bp)
+app.add_url_rule('/', endpoint='initialiser.initialiserHome')
