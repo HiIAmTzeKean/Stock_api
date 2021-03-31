@@ -9,11 +9,11 @@
     <ul class="navbar-nav mr-auto">
 
       <li class="nav-item active">
-        <a class="nav-link" href="{{ url_for('shortSell.shortSellViewer') }}">Chart</a>
+        <a class="nav-link" href="{{ url_for('shortSell.shortSellViewer', ticker='') }}">Chart</a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link" href="#">Add Counter</a>
+        <a class="nav-link" href="{{ url_for('shortSell.shortSellGetPrice', ticker_fk='') }}">Add Counter</a>
       </li>
       
       <li class="nav-item">

@@ -19,6 +19,7 @@ class shortReport(db.Model):
     def __repr__(self):
         return '<Short record {}>'.format(self.date)
 
+
 class stockTicker(db.Model):
     __table_args__ = (
         # this can be db.PrimaryKeyConstraint if you want it to be a primary key
@@ -37,7 +38,11 @@ class stockTicker(db.Model):
     def __repr__(self):
         return '<Record {} {}>'.format(self.name, self.ticker)
 
+
 class stockPrice(db.Model):
+    __table_args__ = (
+        db.UniqueConstraint('date', 'ticker_fk', name='unique_price'),
+      )
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
     openPrice = db.Column(db.Float, nullable=False)

@@ -8,7 +8,7 @@ from flaskapp import db, scheduler
 from flaskapp.models import shortReport, stockPrice, stockTicker
 
 shortSell_bp = Blueprint('shortSell', __name__,
-                         template_folder='templates', static_folder='static')
+                         template_folder='templates/shortSell', static_folder='static')
 
 
 def saveShortSell(date=datetime.date.today()):  # date has to be in datetime format
@@ -50,12 +50,17 @@ def savePrice(ticker_fk):
     c['Date'] = pd.to_datetime(c['Date'])
 
     # get dates that are not yet in data base
-    last_date = db.session.query(stockPrice.date).filter(
-        stockPrice.ticker_fk == ticker_fk).order_by(stockPrice.date.desc()).first()[0]
-    # last_date = datetime.date.today() - datetime.timedelta(days=1000)
+    last_date = db.session.query(stockPrice.date).\
+        filter(stockPrice.ticker_fk == ticker_fk).\
+        order_by(stockPrice.date.desc()).first()
+    if not last_date:
+        last_date = datetime.date.today() - datetime.timedelta(days=100)
+    else:
+        last_date = last_date[0]
+    
     for i in range(len(c)):
         if c['Date'][i] <= last_date:
-                break
+            break
         try:
             float(c.iloc[i]['Open'])
             record = stockPrice(c.iloc[i]['Date'],
@@ -68,6 +73,7 @@ def savePrice(ticker_fk):
             db.session.add(record)
             db.session.commit()
         except (IntegrityError , HTTPError, InvalidRequestError, ValueError) as e:
+            #print(c['Date'][i], e)
             continue 
 
 
@@ -99,11 +105,11 @@ def shortSellScheduler():
 @shortSell_bp.route('/shortSellGetPrice/<ticker_fk>', methods=('GET', 'POST'))
 def shortSellGetPrice(ticker_fk):
     savePrice(ticker_fk)
-    return 'Done'
+    return render_template('shortSellGetPrice.html', tickerName=str(ticker_fk))
 
 # view graph
-@shortSell_bp.route('/shortSellViewer', methods=('GET', 'POST'))
-def shortSellViewer():
+@shortSell_bp.route('/shortSellViewer/<ticker>', methods=('GET', 'POST'))
+def shortSellViewer(ticker):
     import pandas as pd
     import numpy as np
     import io
@@ -116,8 +122,11 @@ def shortSellViewer():
     import matplotlib.dates as mdates
 
     # choosing the stock I want to see
-    ticker = 'BS6.SI'
-    stock = 'YZJ Shipbldg SGD'
+    stock = db.session.query(stockTicker.name).filter_by(ticker=ticker).scalar()
+    if not stock:
+        return 'Failed'
+    #ticker = 'BS6.SI'
+    #stock = 'YZJ Shipbldg SGD'
 
     # get all short record
     records = db.session.query(shortReport.stocks[stock],shortReport.date).all()
@@ -142,21 +151,28 @@ def shortSellViewer():
     fig = mpf.figure(figsize=(15, 15))
     ax = fig.add_subplot(3, 2, 1)
     ax2 = fig.add_subplot(3, 2, 2, sharex=ax)
-    mpf.plot(df2.set_index('Date'), type='candle', mav=(3, 6, 9), ax=ax, volume=ax2, show_nontrading=True)
-    #ax.xaxis.set_major_locator(MultipleLocator(7))
-    #ax2.xaxis.set_major_locator(MultipleLocator(7))
-    ax2.yaxis.set_major_locator(MultipleLocator(20*1000000))
+    mpf.plot(df2.set_index('Date'), type='candle', mav=(3, 6, 9), ax=ax, show_nontrading=True)
 
-    # short volume
+    # volume traded
+    ax2.bar(df2['Date'], df2['Volume']/1000000)
+    ax2.set_ylabel("Volume 10^6")
+    plt.xticks(rotation=90)
+
+    # ratio
     ax3 = fig.add_subplot(3, 2, 3, sharex=ax)
     df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
     df2 = df2.merge(df, how='left', on='Date')
-    
-    # ax3.yaxis.set_major_locator(MultipleLocator(2*1000000))
     plt.xticks(rotation=90)
     ax3.bar(df2['Date'], df2['ShortSaleVolume']/df2['Volume'])
-    ax3.xaxis.set_major_locator(MultipleLocator(7))
-    ax3.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
+    ax3.set_ylabel("ShorVolume/Volume")
+
+    # short vol
+    ax4 = fig.add_subplot(3, 2, 4, sharex=ax)
+    plt.xticks(rotation=90)
+    ax4.bar(df2['Date'], df2['ShortSaleVolume'])
+    ax4.set_ylabel("ShortVolume 10^6")
+    ax4.xaxis.set_major_locator(MultipleLocator(7))
+    ax4.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
 
     # Convert plot to PNG image
     pngImage = io.BytesIO()
