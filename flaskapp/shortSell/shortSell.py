@@ -117,7 +117,7 @@ def shortSellViewer(ticker):
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
     from matplotlib.figure import Figure
     import mplfinance as mpf
-    from matplotlib.ticker import MultipleLocator
+    from matplotlib.ticker import MultipleLocator,FuncFormatter
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
 
@@ -127,9 +127,9 @@ def shortSellViewer(ticker):
         return 'Failed'
     #ticker = 'BS6.SI'
     #stock = 'YZJ Shipbldg SGD'
-
+    
     # get all short record
-    records = db.session.query(shortReport.stocks[stock],shortReport.date).all()
+    records = db.session.query(shortReport.stocks[stock],shortReport.date).filter(shortReport.stocks[stock].isnot(None)).all()
     records = np.transpose(records)
     vol,val = zip(*records[0])
     record = zip(records[1],vol,val)
@@ -154,7 +154,7 @@ def shortSellViewer(ticker):
     mpf.plot(df2.set_index('Date'), type='candle', mav=(3, 6, 9), ax=ax, show_nontrading=True)
 
     # volume traded
-    ax2.bar(df2['Date'], df2['Volume']/1000000)
+    ax2.bar(df2['Date'], df2['Volume'])
     ax2.set_ylabel("Volume 10^6")
     plt.xticks(rotation=90)
 
@@ -169,11 +169,14 @@ def shortSellViewer(ticker):
     # short vol
     ax4 = fig.add_subplot(3, 2, 4, sharex=ax)
     plt.xticks(rotation=90)
-    ax4.bar(df2['Date'], df2['ShortSaleVolume']/1000000)
+    ax4.bar(df2['Date'], df2['ShortSaleVolume'])
     ax4.set_ylabel("ShortVolume 10^6")
     ax4.xaxis.set_major_locator(MultipleLocator(7))
     ax4.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
 
+    ticks_y = FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
+    ax4.yaxis.set_major_formatter(ticks_y)
+    ax2.yaxis.set_major_formatter(ticks_y)
     # Convert plot to PNG image
     pngImage = io.BytesIO()
     FigureCanvas(fig).print_png(pngImage)
