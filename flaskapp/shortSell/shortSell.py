@@ -169,7 +169,7 @@ def shortSellViewer(ticker):
     # short vol
     ax4 = fig.add_subplot(3, 2, 4, sharex=ax)
     plt.xticks(rotation=90)
-    ax4.bar(df2['Date'], df2['ShortSaleVolume'])
+    ax4.bar(df2['Date'], df2['ShortSaleVolume']/1000000)
     ax4.set_ylabel("ShortVolume 10^6")
     ax4.xaxis.set_major_locator(MultipleLocator(7))
     ax4.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
