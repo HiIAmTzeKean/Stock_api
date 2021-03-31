@@ -131,7 +131,6 @@ def shortSellViewer(ticker):
     # get all short record
     records = db.session.query(shortReport.stocks[stock],shortReport.date).all()
     records = np.transpose(records)
-    return str(records)
     vol,val = zip(*records[0])
     record = zip(records[1],vol,val)
     df = pd.DataFrame(record, columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
