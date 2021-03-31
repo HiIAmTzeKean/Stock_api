@@ -19,7 +19,7 @@ class ProductionConfig(Config):
 class DevelopmentConfig(Config):
     ENV = 'development'
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    TEMPLATES_AUTO_RELOAD = True
+    #TEMPLATES_AUTO_RELOAD = True
     DEBUG = True
 
 class TestingConfig(Config):

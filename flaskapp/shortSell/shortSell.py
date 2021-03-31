@@ -52,24 +52,23 @@ def savePrice(ticker_fk):
     # get dates that are not yet in data base
     last_date = db.session.query(stockPrice.date).filter(
         stockPrice.ticker_fk == ticker_fk).order_by(stockPrice.date.desc()).first()[0]
-
+    # last_date = datetime.date.today() - datetime.timedelta(days=1000)
     for i in range(len(c)):
+        if c['Date'][i] <= last_date:
+                break
         try:
             float(c.iloc[i]['Open'])
-            if c['Date'][i] <= last_date:
-                break
-        except ValueError:
-            continue
-        record = stockPrice(c.iloc[i]['Date'],
+            record = stockPrice(c.iloc[i]['Date'],
                             ticker_fk,
                             c.iloc[i]['Open'],
                             c.iloc[i]['High'],
                             c.iloc[i]['Low'],
                             c.iloc[i]['Close*'],
                             c.iloc[i]['Volume'])
-        db.session.add(record)
-    db.session.commit()
-    return
+            db.session.add(record)
+            db.session.commit()
+        except (IntegrityError , HTTPError, InvalidRequestError, ValueError) as e:
+            continue 
 
 
 def savePrices(tickerList):
@@ -106,6 +105,7 @@ def shortSellGetPrice(ticker_fk):
 @shortSell_bp.route('/shortSellViewer', methods=('GET', 'POST'))
 def shortSellViewer():
     import pandas as pd
+    import numpy as np
     import io
     import base64
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -113,63 +113,50 @@ def shortSellViewer():
     import mplfinance as mpf
     from matplotlib.ticker import MultipleLocator
     import matplotlib.pyplot as plt
-    import json
+    import matplotlib.dates as mdates
 
     # choosing the stock I want to see
     ticker = 'BS6.SI'
     stock = 'YZJ Shipbldg SGD'
 
-    # get all stock short record
-    df = pd.DataFrame(columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
-    columns = list(df)
-    data = []
+    # get all short record
     records = db.session.query(shortReport.stocks[stock],shortReport.date).all()
-    for record in records:
-        values = [record.date, record[0][0], record[0][1]]
-        data.append(dict(zip(columns, values)))
-    df = df.append(data, True)
+    records = np.transpose(records)
+    vol,val = zip(*records[0])
+    record = zip(records[1],vol,val)
+    df = pd.DataFrame(record, columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
 
     # get all price record
-    df2 = pd.DataFrame(
-        columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
-    columns = list(df2)
-    data = []
-
-    records = db.session.query(stockPrice).filter_by(ticker_fk=ticker).all()
-    for record in records:
-        values = [record.date, record.openPrice, record.highPrice,
-                  record.lowPrice, record.closePrice, record.volume]
-        data.append(dict(zip(columns, values)))
-    df2 = df2.append(data, True)
+    records = db.session.query(stockPrice.date,
+                               stockPrice.openPrice,
+                               stockPrice.highPrice,
+                               stockPrice.lowPrice,
+                               stockPrice.closePrice,
+                               stockPrice.volume).filter_by(ticker_fk=ticker).all()
+    df2 = pd.DataFrame(records, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
 
     # normal plot
     df2['Date'] = pd.to_datetime(df2['Date'], format='%Y-%m-%d')
     df2.sort_values(by=['Date'], ascending=True, inplace=True)
     df2 = df2[df2['Date'] > pd.to_datetime('2020-12-07', format='%Y-%m-%d')]
     fig = mpf.figure(figsize=(15, 15))
-    ax = fig.add_subplot(3, 1, 1)
-    ax2 = fig.add_subplot(3, 1, 2, sharex=ax)
-    mpf.plot(df2.set_index('Date'), type='candle', mav=(
-        3, 6, 9), ax=ax, volume=ax2, show_nontrading=True)
-    ax.xaxis.set_major_locator(MultipleLocator(7))
-    ax2.xaxis.set_major_locator(MultipleLocator(7))
+    ax = fig.add_subplot(3, 2, 1)
+    ax2 = fig.add_subplot(3, 2, 2, sharex=ax)
+    mpf.plot(df2.set_index('Date'), type='candle', mav=(3, 6, 9), ax=ax, volume=ax2, show_nontrading=True)
+    #ax.xaxis.set_major_locator(MultipleLocator(7))
+    #ax2.xaxis.set_major_locator(MultipleLocator(7))
     ax2.yaxis.set_major_locator(MultipleLocator(20*1000000))
-    plt.xticks(rotation=90)
 
     # short volume
-    ax3 = fig.add_subplot(3, 1, 3)
+    ax3 = fig.add_subplot(3, 2, 3, sharex=ax)
     df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-    df['Date'] = df['Date']
     df2 = df2.merge(df, how='left', on='Date')
-    df2.sort_values(by=['Date'], ascending=True, inplace=True)
-    df2.drop(['Volume', 'ShortSaleValues'], axis=1, inplace=True)
-    df2.rename(columns={"ShortSaleVolume": "Volume"}, inplace=True)
-    # print(df2.iloc[-10:-1])
-    mpf.plot(df2.set_index('Date'), type='candle',
-             ax=ax3, volume=ax3, show_nontrading=True)
-    ax3.xaxis.set_major_locator(MultipleLocator(7))
-    ax3.yaxis.set_major_locator(MultipleLocator(2*1000000))
+    
+    # ax3.yaxis.set_major_locator(MultipleLocator(2*1000000))
     plt.xticks(rotation=90)
+    ax3.bar(df2['Date'], df2['ShortSaleVolume']/df2['Volume'])
+    ax3.xaxis.set_major_locator(MultipleLocator(7))
+    ax3.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
 
     # Convert plot to PNG image
     pngImage = io.BytesIO()

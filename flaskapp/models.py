@@ -8,6 +8,8 @@ class shortReport(db.Model):
     __table_args__ = (db.UniqueConstraint('date'),)
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False)
+
+    # --- (name, [vol, value])
     stocks = db.Column(JSONB, nullable=False)
 
     def __init__(self, date, stocks):
