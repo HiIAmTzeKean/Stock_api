@@ -9,15 +9,15 @@
     <ul class="navbar-nav mr-auto">
 
       <li class="nav-item active">
-        <a class="nav-link" href="{{ url_for('shortSell.shortSellViewer', ticker='') }}">Chart</a>
+        <a class="nav-link" href="{{ url_for('shortSell.shortSellViewer', ticker='TickerCode') }}">Chart</a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('shortSell.shortSellGetPrice', ticker_fk='') }}">Add Counter</a>
+        <a class="nav-link" href="{{ url_for('shortSell.shortSellGetPrice', ticker_fk='TickerCode') }}">Add Counter</a>
       </li>
       
       <li class="nav-item">
-        <a class="nav-link" href="#">None</a>
+        <a class="nav-link" href="{{ url_for('initialiser.initialiserChangeName') }}">Edit Counter</a>
       </li>
 
       <li class="nav-item dropdown">

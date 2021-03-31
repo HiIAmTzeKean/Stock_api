@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Ticker{% endblock %}
+
+{% block content %}
+<h2>Update Ticker</h2>
+
+<form method="POST" action="{{ url_for('initialiser.initialiserChangeName') }}">
+{{ form.hidden_tag() }}
+<table class="table">
+  <tbody>
+    {{ form.errors.items() }}
+    <tr>
+      <th scope="row">{{ form.name.label(class="col-form-label")}}</th>
+      <td colspan="2">{{ form.name(class="form-control")}}</td>
+    </tr>
+    <tr>
+      <th scope="row">{{ form.ticker.label(class="col-form-label") }}</th>
+      <td colspan="2">{{ form.ticker(class="form-control") }}</td>
+    </tr>
+    <tr>
+      <th scope="row">{{ form.website.label(class="col-form-label") }}</th>
+      <td colspan="2">{{ form.website(class="form-control") }}</td>
+    </tr>
+    <tr>
+      <td>{{ form.submit(class="btn btn-success") }}</td>
+    </tr>
+  </tbody>
+</table>
+</form>
+{% endblock %}
