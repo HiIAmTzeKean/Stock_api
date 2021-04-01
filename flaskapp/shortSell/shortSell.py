@@ -25,7 +25,6 @@ def saveShortSell(date):  # date has to be in datetime format
             reader.readline()
             c = pd.read_fwf(reader, skipfooter=4, engine='python')
             c.columns = ['Security', 'ShortSaleVolume', 'Curr', 'ShortSaleValue']
-            print(c)
             c.drop(columns=['Curr'], inplace=True)
         c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
         c['ShortSaleValue'] = pd.to_numeric(c['ShortSaleValue'], errors='coerce')
@@ -44,15 +43,15 @@ def saveShortSell(date):  # date has to be in datetime format
 
 def savePrice(ticker_fk):
     import pandas as pd
-    url = db.session.query(stockTicker.website).filter_by(
-        ticker=ticker_fk).scalar()
+    url = db.session.query(stockTicker.website)\
+            .filter_by(ticker=ticker_fk).scalar()
     c = pd.read_html(url)[0][:-1]
     c['Date'] = pd.to_datetime(c['Date'])
 
     # get dates that are not yet in data base
-    last_date = db.session.query(stockPrice.date).\
-        filter(stockPrice.ticker_fk == ticker_fk).\
-        order_by(stockPrice.date.desc()).first()
+    last_date = db.session.query(stockPrice.date)\
+                  .filter(stockPrice.ticker_fk == ticker_fk)\
+                  .order_by(stockPrice.date.desc()).first()
     if not last_date:
         last_date = datetime.date.today() - datetime.timedelta(days=100)
     else:
@@ -93,9 +92,9 @@ def get_tickerList():
 @shortSell_bp.route('/shortSellScheduler', methods=('GET', 'POST'))
 def shortSellScheduler():
     date = datetime.date.today()
-    # last_date = db.session.query(shortReport.date).order_by(
-    #     shortReport.date.desc()).first()[0]
-    last_date = date - datetime.timedelta(days=1)
+    last_date = db.session.query(shortReport.date).order_by(
+        shortReport.date.desc()).first()[0]
+    # last_date = date - datetime.timedelta(days=1)
     while last_date + datetime.timedelta(days=1) <= date:
         last_date = last_date + datetime.timedelta(days=1)
         saveShortSell(last_date)
