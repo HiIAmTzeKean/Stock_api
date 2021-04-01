@@ -4,7 +4,6 @@ from flask_sqlalchemy import get_debug_queries
 if app.debug:
     app.after_request(sql_debug)
 
-
 def sql_debug(response):
     queries = list(get_debug_queries())
     query_str = ''

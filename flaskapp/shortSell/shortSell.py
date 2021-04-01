@@ -4,21 +4,19 @@ from sqlalchemy.exc import IntegrityError,InvalidRequestError
 import psycopg2
 from flask import (Blueprint, flash, g, make_response, redirect,
                    render_template, request, session, url_for)
-from flaskapp import db, scheduler
+from flaskapp import app, db, scheduler
 from flaskapp.models import shortReport, stockPrice, stockTicker
 
 shortSell_bp = Blueprint('shortSell', __name__,
                          template_folder='templates/shortSell', static_folder='static')
 
 
-def saveShortSell(date=datetime.date.today()):  # date has to be in datetime format
+def saveShortSell(date):  # date has to be in datetime format
     import urllib
     import pandas as pd
     year, month, day = str(date.year), str(date.month), str(date.day)
-    if len(month) == 1:
-        month = month.zfill(2)
-    if len(day) == 1:
-        day = day.zfill(2)
+    if len(month) == 1: month = month.zfill(2)
+    if len(day) == 1: day = day.zfill(2)
 
     url = "https://api2.sgx.com/sites/default/files/reports/short-sell/{0}/{1}/website_DailyShortSell{0}{1}{2}1815.txt".format(
         year, month, day)
@@ -38,7 +36,7 @@ def saveShortSell(date=datetime.date.today()):  # date has to be in datetime for
         db.session.add(record)
         db.session.commit()
     except (IntegrityError , HTTPError, InvalidRequestError) as e:
-        print(date, e)
+        app.logger.error(str(e))
         return
 
 
@@ -73,8 +71,9 @@ def savePrice(ticker_fk):
             db.session.add(record)
             db.session.commit()
         except (IntegrityError , HTTPError, InvalidRequestError, ValueError) as e:
-            #print(c['Date'][i], e)
-            continue 
+            app.logger.error(str(e))
+            continue
+    # app.logger.info('added date')
 
 
 def savePrices(tickerList):
@@ -94,11 +93,11 @@ def shortSellScheduler():
     date = datetime.date.today()
     last_date = db.session.query(shortReport.date).order_by(
         shortReport.date.desc()).first()[0]
-    # last_date = date - datetime.timedelta(days=90)
+    # last_date = date - datetime.timedelta(days=1)
     while last_date + datetime.timedelta(days=1) <= date:
         last_date = last_date + datetime.timedelta(days=1)
         saveShortSell(last_date)
-    return 'h'
+    return 'Done'
 
 
 # getting price for a specific ticker now
@@ -190,3 +189,4 @@ def shortSellViewer(ticker):
 
 scheduler.add_job(func=saveShortSell, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[datetime.date.today()])
 scheduler.add_job(func=savePrices, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[get_tickerList()])
+# scheduler.add_job(func=savePrices, trigger="interval", seconds=10, args=[get_tickerList()])

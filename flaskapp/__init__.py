@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
+import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__, instance_relative_config=True,
@@ -13,6 +14,7 @@ try:
 except OSError:
     pass
 
+logging.basicConfig(level=logging.ERROR,format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s)')
 
 # load config
 app.config.from_object(os.environ['APP_SETTINGS'])
