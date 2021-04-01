@@ -24,6 +24,7 @@ def saveShortSell(date):  # date has to be in datetime format
         with urllib.request.urlopen(url) as reader:
             reader.readline()
             c = pd.read_fwf(reader, skipfooter=4, engine='python')
+            c.columns = ['Security', 'ShortSaleVolume', 'Curr', 'ShortSaleValue']
             print(c)
             c.drop(columns=['Curr'], inplace=True)
         c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
@@ -92,9 +93,9 @@ def get_tickerList():
 @shortSell_bp.route('/shortSellScheduler', methods=('GET', 'POST'))
 def shortSellScheduler():
     date = datetime.date.today()
-    last_date = db.session.query(shortReport.date).order_by(
-        shortReport.date.desc()).first()[0]
-    # last_date = date - datetime.timedelta(days=1)
+    # last_date = db.session.query(shortReport.date).order_by(
+    #     shortReport.date.desc()).first()[0]
+    last_date = date - datetime.timedelta(days=1)
     while last_date + datetime.timedelta(days=1) <= date:
         last_date = last_date + datetime.timedelta(days=1)
         saveShortSell(last_date)
