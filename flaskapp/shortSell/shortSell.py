@@ -24,6 +24,7 @@ def saveShortSell(date):  # date has to be in datetime format
         with urllib.request.urlopen(url) as reader:
             reader.readline()
             c = pd.read_fwf(reader, skipfooter=4, engine='python')
+            print(c)
             c.drop(columns=['Curr'], inplace=True)
         c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
         c['ShortSaleValue'] = pd.to_numeric(c['ShortSaleValue'], errors='coerce')
