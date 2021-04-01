@@ -108,6 +108,15 @@ def shortSellGetPrice(ticker_fk):
     savePrice(ticker_fk)
     return render_template('shortSellGetPrice.html', tickerName=str(ticker_fk))
 
+
+@shortSell_bp.route('/shortSellUpdateAllPrice/', methods=('GET', 'POST'))
+def shortSellUpdateAllPrice():
+    stockList = get_tickerList()
+    for myStock in stockList:
+        savePrice(myStock)
+    return 'Done for all'
+
+
 # view graph
 @shortSell_bp.route('/shortSellViewer/<ticker>', methods=('GET', 'POST'))
 def shortSellViewer(ticker):
@@ -191,4 +200,3 @@ def shortSellViewer(ticker):
 
 scheduler.add_job(func=saveShortSell, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[datetime.date.today()])
 scheduler.add_job(func=savePrices, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[get_tickerList()])
-# scheduler.add_job(func=savePrices, trigger="interval", seconds=10, args=[get_tickerList()])
