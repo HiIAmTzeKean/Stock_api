@@ -6,9 +6,11 @@ from flask import (Blueprint, flash, g, make_response, redirect,
                    render_template, request, session, url_for)
 from flaskapp import app, db, scheduler
 from flaskapp.models import shortReport, stockPrice, stockTicker
+from flaskapp.shortSell.form import formTickerChoose
 
 shortSell_bp = Blueprint('shortSell', __name__,
-                         template_folder='templates/shortSell', static_folder='static')
+                         template_folder='templates/shortSell',
+                         static_folder='static')
 
 
 def saveShortSell(date):  # date has to be in datetime format
@@ -98,7 +100,8 @@ def shortSellScheduler():
     while last_date + datetime.timedelta(days=1) <= date:
         last_date = last_date + datetime.timedelta(days=1)
         saveShortSell(last_date)
-    return 'Done'
+    flash('Done')
+    return redirect(url_for('initialiser.initialiserHome'))
 
 
 # getting price for a specific ticker now
@@ -113,12 +116,12 @@ def shortSellUpdateAllPrice():
     stockList = get_tickerList()
     for myStock in stockList:
         savePrice(myStock)
-    return 'Done for all'
+    flash('Done for all')
+    return redirect(url_for('initialiser.initialiserHome'))
 
 
-# view graph
-@shortSell_bp.route('/shortSellViewer/<ticker>', methods=('GET', 'POST'))
-def shortSellViewer(ticker):
+@shortSell_bp.route('/shortSellGenerator/<ticker>', methods=('GET', 'POST'))
+def shortSellGenerator(ticker):
     import pandas as pd
     import numpy as np
     import io
@@ -134,8 +137,6 @@ def shortSellViewer(ticker):
     stock = db.session.query(stockTicker.name).filter_by(ticker=ticker).scalar()
     if not stock:
         return 'Failed'
-    #ticker = 'BS6.SI'
-    #stock = 'YZJ Shipbldg SGD'
     
     # get all short record
     records = db.session.query(shortReport.stocks[stock],shortReport.date).filter(shortReport.stocks[stock].isnot(None)).all()
@@ -194,8 +195,19 @@ def shortSellViewer(ticker):
     pngImageB64String = "data:image/png;base64,"
     pngImageB64String += base64.b64encode(pngImage.getvalue()).decode('utf8')
 
-    return render_template('shortSellViewer.html', name='new_plot', myimage=pngImageB64String)
+    return render_template('shortSellGenerator.html', name='new_plot', myimage=pngImageB64String)
 
+
+@shortSell_bp.route('/shortSellViewer/', methods=('GET', 'POST'))
+def shortSellViewer():
+    tickerList = db.session.query(stockTicker.name, stockTicker.ticker).filter(stockTicker.website!=None).all()
+    print(tickerList)
+    form = formTickerChoose()
+    form.ticker.choices = [(tickerRecord.ticker,tickerRecord.name) for tickerRecord in tickerList]
+    if form.validate_on_submit():
+        return redirect(url_for('shortSell.shortSellGenerator', ticker=form.ticker.data))
+    return render_template('shortSellViewer.html', form=form)
+    
 
 scheduler.add_job(func=saveShortSell, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[datetime.date.today()])
 scheduler.add_job(func=savePrices, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[get_tickerList()])
