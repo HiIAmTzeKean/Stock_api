@@ -1,6 +1,6 @@
 import datetime
 from urllib.error import HTTPError
-from sqlalchemy.exc import IntegrityError,InvalidRequestError
+from sqlalchemy.exc import IntegrityError,InvalidRequestError,DataError
 import psycopg2
 from flask import (Blueprint, flash, g, make_response, redirect,
                    render_template, request, session, url_for)
@@ -58,7 +58,7 @@ def savePrice(ticker_fk):
         last_date = datetime.date.today() - datetime.timedelta(days=100)
     else:
         last_date = last_date[0]
-    
+    c['Volume'] = pd.to_numeric(c['Volume'], errors='coerce')
     for i in range(len(c)):
         if c['Date'][i] <= last_date:
             break
@@ -73,7 +73,7 @@ def savePrice(ticker_fk):
                             c.iloc[i]['Volume'])
             db.session.add(record)
             db.session.commit()
-        except (IntegrityError , HTTPError, InvalidRequestError, ValueError) as e:
+        except (IntegrityError, DataError, HTTPError, InvalidRequestError, ValueError) as e:
             app.logger.error(str(e))
             continue
     # app.logger.info('added date')
@@ -161,7 +161,7 @@ def shortSellGenerator(ticker):
     fig = mpf.figure(figsize=(15, 15))
     ax = fig.add_subplot(3, 2, 1)
     ax2 = fig.add_subplot(3, 2, 2, sharex=ax)
-    mpf.plot(df2.set_index('Date'), type='candle', mav=(3, 6, 9), ax=ax, show_nontrading=True)
+    mpf.plot(df2.set_index('Date'), type='candle', ax=ax, show_nontrading=True)
 
     # volume traded
     ax2.bar(df2['Date'], df2['Volume'])
@@ -200,9 +200,8 @@ def shortSellGenerator(ticker):
 
 @shortSell_bp.route('/shortSellViewer/', methods=('GET', 'POST'))
 def shortSellViewer():
-    tickerList = db.session.query(stockTicker.name, stockTicker.ticker).filter(stockTicker.website!=None).all()
-    print(tickerList)
     form = formTickerChoose()
+    tickerList = db.session.query(stockTicker.name, stockTicker.ticker).filter(stockTicker.website!=None).all()
     form.ticker.choices = [(tickerRecord.ticker,tickerRecord.name) for tickerRecord in tickerList]
     if form.validate_on_submit():
         return redirect(url_for('shortSell.shortSellGenerator', ticker=form.ticker.data))

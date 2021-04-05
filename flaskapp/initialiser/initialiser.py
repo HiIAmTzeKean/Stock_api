@@ -30,6 +30,7 @@ def initialiserSellTickerCreator():
         db.session.commit()
     return (str(Path().absolute()) + filename)
 
+
 @initialiser_bp.route('/initialiserChangeName', methods=('GET', 'POST'))
 def initialiserChangeName():
     form = formTickerEdit()
@@ -39,7 +40,7 @@ def initialiserChangeName():
             form.populate_obj(record)
             db.session.commit()
             flash('Added {} {}'.format(form.ticker.data,form.name.data))
-            return redirect(url_for('initialiser.initialiserHome'))
+            return redirect(url_for('shortSell.shortSellGetPrice', ticker_fk=form.ticker.data))
         return 'Not valid ticker'
 
     return render_template('initialiserChangeName.html', form=form)
