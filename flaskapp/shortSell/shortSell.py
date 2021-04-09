@@ -245,11 +245,14 @@ def shortSellSaveSBL():
 @shortSell_bp.route('/shortSellAll/', methods=('GET', 'POST'))
 def shortSellAll():
     saveSBL(datetime.date.today())
+    db.session.close()
+
     # part 2
     stockList = get_tickerList()
     for myStock in stockList:
         savePrice(myStock)
-    # print('Clear')
+    db.session.close()
+
     # part 3
     saveShortSell(datetime.date.today())
 
