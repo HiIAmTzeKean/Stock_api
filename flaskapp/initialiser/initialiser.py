@@ -45,3 +45,22 @@ def initialiserChangeName():
 
     return render_template('initialiserChangeName.html', form=form)
 
+
+def addISIN():
+    import requests
+    page = requests.get("https://www1.cdp.sgx.com/sgx-cdp-web/lendingpool/show")
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(page.content, 'html.parser')
+    filein = soup.find(id="lendingpooltable")
+    import pandas as pd
+    c = pd.read_html(filein.prettify())[0]
+    c.set_index('Security Name', inplace = True)
+
+    tickerList = db.session.query(stockTicker).all()
+    for item in tickerList:
+        try:
+            item.isin = c.loc[str(item.name).upper()]['Security Code']
+            db.session.commit()
+        except Exception as e:
+            # print(c.loc[str(item.name).capitalize()]['Security Code'])
+            print(e)

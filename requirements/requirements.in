@@ -9,6 +9,8 @@ python-dotenv
 gitpython
 is-safe-url
 psycopg2-binary
+requests
+bs4
 lxml
 matplotlib
 mplfinance

@@ -5,7 +5,7 @@ import psycopg2
 from flask import (Blueprint, flash, g, make_response, redirect,
                    render_template, request, session, url_for)
 from flaskapp import app, db, scheduler
-from flaskapp.models import shortReport, stockPrice, stockTicker
+from flaskapp.models import shortReport, stockPrice, stockTicker, stockBorrow
 from flaskapp.shortSell.form import formTickerChoose
 
 shortSell_bp = Blueprint('shortSell', __name__,
@@ -43,6 +43,34 @@ def saveShortSell(date):  # date has to be in datetime format
         return
 
 
+def saveSBL(date):  # date has to be in datetime format
+    year, month, day = str(date.year), str(date.month), str(date.day)
+    if len(month) == 1: month = month.zfill(2)
+    if len(day) == 1: day = day.zfill(2)
+
+    import requests
+    page = requests.get("https://www1.cdp.sgx.com/sgx-cdp-web/lendingpool/show")
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(page.content, 'html.parser')
+    filein = soup.find(id="lendingpooltable")
+    import pandas as pd
+    c = pd.read_html(filein.prettify())[0]
+    try:
+        c.drop(columns=['No.','Security Name','Lending Rate (%)', 'Borrowing Rate (%)'], inplace=True)
+        c['Lending Pool'] = pd.to_numeric(c['Lending Pool'], errors='coerce')
+        c = c.dropna()
+        d = dict()
+        for i in range(len(c)):
+            d[c.iloc[i]['Security Code']] = float(c.iloc[i]['Lending Pool'])
+        record = stockBorrow(date, d)
+        db.session.add(record)
+        db.session.commit()
+    except (IntegrityError, InvalidRequestError) as e:
+        app.logger.error(str(e))
+    except:
+        return
+
+
 def savePrice(ticker_fk):
     import pandas as pd
     url = db.session.query(stockTicker.website)\
@@ -76,7 +104,7 @@ def savePrice(ticker_fk):
         except (IntegrityError, DataError, HTTPError, InvalidRequestError, ValueError) as e:
             app.logger.error(str(e))
             continue
-    # app.logger.info('added date')
+    return
 
 
 def savePrices(tickerList):
@@ -208,5 +236,26 @@ def shortSellViewer():
     return render_template('shortSellViewer.html', form=form)
     
 
-scheduler.add_job(func=saveShortSell, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[datetime.date.today()])
-scheduler.add_job(func=savePrices, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[get_tickerList()])
+@shortSell_bp.route('/shortSellSaveSBL/', methods=('GET', 'POST'))
+def shortSellSaveSBL():
+    saveSBL(datetime.date.today())
+    flash('Done for all')
+    return redirect(url_for('initialiser.initialiserHome'))
+
+@shortSell_bp.route('/shortSellAll/', methods=('GET', 'POST'))
+def shortSellAll():
+    saveSBL(datetime.date.today())
+    # part 2
+    stockList = get_tickerList()
+    for myStock in stockList:
+        savePrice(myStock)
+    # print('Clear')
+    # part 3
+    saveShortSell(datetime.date.today())
+
+    flash('Done for all')
+    return redirect(url_for('initialiser.initialiserHome'))
+
+
+#scheduler.add_job(func=saveShortSell, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[datetime.date.today()])
+#scheduler.add_job(func=savePrices, trigger="date", run_date=datetime.date.today() + datetime.timedelta(days=1), args=[get_tickerList()])

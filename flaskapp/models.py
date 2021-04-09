@@ -1,8 +1,6 @@
-from flaskapp import db
+from flaskapp import db, app, migrate
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import JSON, JSONB
-import json
-
+from sqlalchemy.dialects.postgresql import JSONB
 
 class shortReport(db.Model):
     __table_args__ = (db.UniqueConstraint('date'),)
@@ -23,10 +21,11 @@ class shortReport(db.Model):
 class stockTicker(db.Model):
     __table_args__ = (
         # this can be db.PrimaryKeyConstraint if you want it to be a primary key
-        db.UniqueConstraint('name', 'ticker'),
+        db.UniqueConstraint('name', 'ticker', 'isin'),
       )
     name = db.Column(db.String, nullable=False)
     ticker = db.Column(db.String, primary_key=True)
+    isin = db.Column(db.String)
     website = db.Column(db.String)
 
     prices = db.relationship('stockPrice', back_populates='tickers', cascade="all, delete", passive_deletes=True)
@@ -66,6 +65,22 @@ class stockPrice(db.Model):
 
     def __repr__(self):
         return '<Price {} {}>'.format(self.date, self.ticker_fk)
+
+
+class stockBorrow(db.Model):
+    __table_args__ = (db.UniqueConstraint('date'),)
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
+
+    # --- (name, [vol, borrrowrate])
+    stocks = db.Column(JSONB, nullable=False)
+
+    def __init__(self, date, stocks):
+        self.date = date
+        self.stocks = stocks
+
+    def __repr__(self):
+        return '<SBL record {}>'.format(self.date)
 
 
 class Users(db.Model):

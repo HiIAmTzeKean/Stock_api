@@ -11,10 +11,6 @@
       <li class="nav-item active">
         <a class="nav-link" href="{{ url_for('shortSell.shortSellViewer') }}">Chart</a>
       </li>
-
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('shortSell.shortSellGetPrice', ticker_fk='TickerCode') }}">Add Counter</a>
-      </li>
       
       <li class="nav-item">
         <a class="nav-link" href="{{ url_for('initialiser.initialiserChangeName') }}">Edit Counter</a>
@@ -28,6 +24,8 @@
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="{{ url_for('shortSell.shortSellScheduler') }}">Update Shortsell</a>
           <a class="dropdown-item" href="{{ url_for('shortSell.shortSellUpdateAllPrice') }}">Update all price</a>
+          <a class="dropdown-item" href="{{ url_for('shortSell.shortSellSaveSBL') }}">Update SBL</a>
+          <a class="dropdown-item" href="{{ url_for('shortSell.shortSellAll') }}">Update All</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="#">None</a>
         </div>
