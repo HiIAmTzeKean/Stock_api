@@ -3,6 +3,9 @@
 {% block title %}Selector{% endblock %}
 
 {% block content %}
+<div class='container'>
+
+
 <form method="POST" action="{{ url_for('shortSell.shortSellViewer') }}">
     {{ form.hidden_tag() }}
     
@@ -27,4 +30,5 @@
     </div>
   
   </form>
+</div>
 {% endblock %}

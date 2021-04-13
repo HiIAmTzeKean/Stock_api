@@ -40,7 +40,28 @@ def saveShortSell(date):  # date has to be in datetime format
         db.session.commit()
     except (IntegrityError , HTTPError, InvalidRequestError) as e:
         app.logger.error(str(e))
-        return
+    
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as reader:
+            reader.readline()
+            c = pd.read_fwf(reader, skipfooter=4, engine='python')
+            c.columns = ['Security', 'ShortSaleVolume', 'Curr', 'ShortSaleValue']
+            c.drop(columns=['Curr'], inplace=True)
+        c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
+        c['ShortSaleValue'] = pd.to_numeric(c['ShortSaleValue'], errors='coerce')
+        c = c.dropna()
+        d = dict()
+        for i in range(len(c)):
+            d[c.iloc[i]['Security']] = [float(c.iloc[i]['ShortSaleVolume']),
+                                        float(c.iloc[i]['ShortSaleValue'])]
+        record = shortReport(date, d)
+        db.session.add(record)
+        db.session.commit()
+    except (IntegrityError , HTTPError, InvalidRequestError) as e:
+        flash('failed haiz')
+        app.logger.error(str(e))
+    return
 
 
 def saveSBL(date):  # date has to be in datetime format
@@ -124,7 +145,7 @@ def shortSellScheduler():
     date = datetime.date.today()
     last_date = db.session.query(shortReport.date).order_by(
         shortReport.date.desc()).first()[0]
-    # last_date = date - datetime.timedelta(days=1)
+    
     while last_date + datetime.timedelta(days=1) <= date:
         last_date = last_date + datetime.timedelta(days=1)
         saveShortSell(last_date)
@@ -186,7 +207,7 @@ def shortSellGenerator(ticker):
     df2['Date'] = pd.to_datetime(df2['Date'], format='%Y-%m-%d')
     df2.sort_values(by=['Date'], ascending=True, inplace=True)
     df2 = df2[df2['Date'] > pd.to_datetime('2020-12-07', format='%Y-%m-%d')]
-    fig = mpf.figure(figsize=(15, 15))
+    fig = mpf.figure(figsize=(11, 10))
     ax = fig.add_subplot(3, 2, 1)
     ax2 = fig.add_subplot(3, 2, 2, sharex=ax)
     mpf.plot(df2.set_index('Date'), type='candle', ax=ax, show_nontrading=True)
@@ -212,9 +233,14 @@ def shortSellGenerator(ticker):
     ax4.xaxis.set_major_locator(MultipleLocator(7))
     ax4.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
 
+    # Format Y axis to millions
     ticks_y = FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
     ax4.yaxis.set_major_formatter(ticks_y)
     ax2.yaxis.set_major_formatter(ticks_y)
+
+    # Set spaacing bewteen plots
+    plt.subplots_adjust(hspace=1)
+
     # Convert plot to PNG image
     pngImage = io.BytesIO()
     FigureCanvas(fig).print_png(pngImage)
@@ -241,6 +267,7 @@ def shortSellSaveSBL():
     saveSBL(datetime.date.today())
     flash('Done for all')
     return redirect(url_for('initialiser.initialiserHome'))
+
 
 @shortSell_bp.route('/shortSellAll/', methods=('GET', 'POST'))
 def shortSellAll():
