@@ -207,7 +207,7 @@ def shortSellGenerator(ticker):
     df2['Date'] = pd.to_datetime(df2['Date'], format='%Y-%m-%d')
     df2.sort_values(by=['Date'], ascending=True, inplace=True)
     df2 = df2[df2['Date'] > pd.to_datetime('2020-12-07', format='%Y-%m-%d')]
-    fig = mpf.figure(figsize=(11, 10))
+    fig = mpf.figure(figsize=(16, 10))
     ax = fig.add_subplot(3, 2, 1)
     ax2 = fig.add_subplot(3, 2, 2, sharex=ax)
     mpf.plot(df2.set_index('Date'), type='candle', ax=ax, show_nontrading=True)
