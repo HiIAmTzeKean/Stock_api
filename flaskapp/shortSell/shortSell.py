@@ -224,6 +224,7 @@ def shortSellGenerator(ticker):
     plt.xticks(rotation=90)
     ax3.bar(df2['Date'], df2['ShortSaleVolume']/df2['Volume'])
     ax3.set_ylabel("ShorVolume/Volume")
+    ax3.yaxis.set_major_locator(MultipleLocator(0.05))
 
     # short vol
     ax4 = fig.add_subplot(3, 2, 4, sharex=ax)
@@ -239,7 +240,7 @@ def shortSellGenerator(ticker):
     ax2.yaxis.set_major_formatter(ticks_y)
 
     # Set spaacing bewteen plots
-    plt.subplots_adjust(hspace=1)
+    plt.subplots_adjust(hspace=0.2)
 
     # Convert plot to PNG image
     pngImage = io.BytesIO()

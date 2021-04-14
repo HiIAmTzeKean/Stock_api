@@ -11,6 +11,14 @@ initialiser_bp = Blueprint('initialiser', __name__,
 
 @initialiser_bp.route('/initialiserHome', methods=('GET', 'POST'))
 def initialiserHome():
+    constituents = ['Ascendas Reit', 'CapitaLand']
+    temp = []
+    records = db.session.query(shortReport.stocks,shortReport.date).limit(5).all()
+    for record in records:
+        for item in constituents:
+            temp.append([record.stocks[item][1],item,record.date])
+    # records = db.session.query(shortReport.stocks['Ascendas Reit'],shortReport.stocks['CapitaLand'],shortReport.date).limit(1).all()
+    print(temp)
     return render_template('initialiserHome.html')
 
 
