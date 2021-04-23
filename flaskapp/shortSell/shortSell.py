@@ -233,7 +233,7 @@ def shortSellGenerator(ticker):
     ax5.bar(df2['Date'], df2['ShortSaleValues']/df2['ShortSaleVolume'])
     ax5.set_ylabel("Short aggregate price")
     ax5.yaxis.set_major_locator(MultipleLocator(0.025))
-    ax5.set_ylim(min(df2['ShortSaleValues']/df2['ShortSaleVolume']))
+    ax5.set_ylim(min(df2['ShortSaleValues']/df2['ShortSaleVolume']),max(df2['ShortSaleValues']/df2['ShortSaleVolume'])*1.01)
 
     # short vol
     ax4 = fig.add_subplot(3, 2, 6, sharex=ax)
