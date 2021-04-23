@@ -217,12 +217,6 @@ def shortSellGenerator(ticker):
     ax2.set_ylabel("Volume 10^6")
     plt.xticks(rotation=90)
 
-    # short ave price
-    ax5 = fig.add_subplot(3, 2, 3, sharex=ax)
-    plt.xticks(rotation=90)
-    ax5.plot(df2['Date'], df2['ShortSaleValues']/df2['ShortSaleVolume'])
-    ax5.set_ylabel("Short aggregate price")
-
     # ratio
     ax3 = fig.add_subplot(3, 2, 4, sharex=ax)
     df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
@@ -239,6 +233,12 @@ def shortSellGenerator(ticker):
     ax4.set_ylabel("ShortVolume 10^6")
     ax4.xaxis.set_major_locator(MultipleLocator(7))
     ax4.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
+
+    # short ave price
+    ax5 = fig.add_subplot(3, 2, 3, sharex=ax)
+    plt.xticks(rotation=90)
+    ax5.plot(df2['Date'], df2['ShortSaleValues']/df2['ShortSaleVolume'])
+    ax5.set_ylabel("Short aggregate price")
 
     # Format Y axis to millions
     ticks_y = FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
