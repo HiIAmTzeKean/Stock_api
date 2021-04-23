@@ -227,14 +227,6 @@ def shortSellGenerator(ticker):
     ax3.set_ylabel("ShorVolume/Volume")
     ax3.yaxis.set_major_locator(MultipleLocator(0.05))
 
-    # short vol
-    ax4 = fig.add_subplot(3, 2, 6, sharex=ax)
-    plt.xticks(rotation=90)
-    ax4.bar(df2['Date'], df2['ShortSaleVolume'])
-    ax4.set_ylabel("ShortVolume 10^6")
-    ax4.xaxis.set_major_locator(MultipleLocator(7))
-    ax4.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
-
     # short ave price
     ax5 = fig.add_subplot(3, 2, 3, sharex=ax)
     plt.xticks(rotation=90)
@@ -242,6 +234,14 @@ def shortSellGenerator(ticker):
     ax5.set_ylabel("Short aggregate price")
     ax5.yaxis.set_major_locator(MultipleLocator(0.025))
     ax5.set_ylim(min(df2['ShortSaleValues']/df2['ShortSaleVolume']))
+
+    # short vol
+    ax4 = fig.add_subplot(3, 2, 6, sharex=ax)
+    plt.xticks(rotation=90)
+    ax4.bar(df2['Date'], df2['ShortSaleVolume'])
+    ax4.set_ylabel("ShortVolume 10^6")
+    ax4.xaxis.set_major_locator(MultipleLocator(7))
+    ax4.xaxis.set_major_formatter(mdates.DateFormatter('%d-%m-%y'))
 
     # Format Y axis to millions
     ticks_y = FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
