@@ -87,6 +87,7 @@ def saveSBL(date):  # date has to be in datetime format
         db.session.add(record)
         db.session.commit()
     except (IntegrityError, InvalidRequestError) as e:
+        flash('SBL failed to update')
         app.logger.error(str(e))
     except:
         return
@@ -237,8 +238,10 @@ def shortSellGenerator(ticker):
     # short ave price
     ax5 = fig.add_subplot(3, 2, 3, sharex=ax)
     plt.xticks(rotation=90)
-    ax5.plot(df2['Date'], df2['ShortSaleValues']/df2['ShortSaleVolume'])
+    ax5.bar(df2['Date'], df2['ShortSaleValues']/df2['ShortSaleVolume'])
     ax5.set_ylabel("Short aggregate price")
+    ax5.yaxis.set_major_locator(MultipleLocator(0.025))
+    ax5.set_ylim(min(df2['ShortSaleValues']/df2['ShortSaleVolume']))
 
     # Format Y axis to millions
     ticks_y = FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e6))
