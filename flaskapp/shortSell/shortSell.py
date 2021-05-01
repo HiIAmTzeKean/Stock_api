@@ -184,13 +184,16 @@ def shortSellGetWeekly():
     df = pd.DataFrame(record, columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
     text =''
     sumVol = 0
+    sumVal = 0
     for i in range(len(df)):
         # identifier for monday
         if df.iloc[i]['Date'].weekday() == 0:
             text+= 'for period of {} to {}\n'.format(df.iloc[i]['Date']- datetime.timedelta(days=7),df.iloc[i]['Date']- datetime.timedelta(days=3))
-            text+= '{}\n'.format(sumVol)
+            text+= 'val = {}\n'.format(sumVal)
+            text+= 'vol = {}\n'.format(sumVol)
             sumVol = 0
         sumVol += df.iloc[i]['ShortSaleVolume']
+        sumVal += df.iloc[i]['ShortSaleValues']
     print(text)
     return text
 
