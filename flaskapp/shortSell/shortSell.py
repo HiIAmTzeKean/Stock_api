@@ -140,6 +140,8 @@ def get_tickerList():
     return [item for t in lt for item in t]
 
 
+
+
 # populate DB with the missing short dates
 @shortSell_bp.route('/shortSellScheduler', methods=('GET', 'POST'))
 def shortSellScheduler():
@@ -168,6 +170,29 @@ def shortSellUpdateAllPrice():
         savePrice(myStock)
     flash('Done for all')
     return redirect(url_for('initialiser.initialiserHome'))
+
+
+@shortSell_bp.route('/shortSellGetWeekly', methods=('GET', 'POST'))
+def shortSellGetWeekly():
+    import pandas as pd
+    import numpy as np
+    stock = db.session.query(stockTicker.name).filter_by(ticker='BS6.SI').scalar()
+    records = db.session.query(shortReport.stocks[stock],shortReport.date).filter(shortReport.stocks[stock].isnot(None)).all()
+    records = np.transpose(records)
+    vol,val = zip(*records[0])
+    record = zip(records[1],vol,val)
+    df = pd.DataFrame(record, columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
+    text =''
+    sumVol = 0
+    for i in range(len(df)):
+        # identifier for monday
+        if df.iloc[i]['Date'].weekday() == 0:
+            text+= 'for period of {} to {}\n'.format(df.iloc[i]['Date']- datetime.timedelta(days=7),df.iloc[i]['Date']- datetime.timedelta(days=3))
+            text+= '{}\n'.format(sumVol)
+            sumVol = 0
+        sumVol += df.iloc[i]['ShortSaleVolume']
+    print(text)
+    return text
 
 
 @shortSell_bp.route('/shortSellGenerator/<ticker>', methods=('GET', 'POST'))
