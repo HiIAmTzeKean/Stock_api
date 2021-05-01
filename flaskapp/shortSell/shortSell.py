@@ -192,6 +192,7 @@ def shortSellGetWeekly():
             text+= 'val = {}\n'.format(sumVal)
             text+= 'vol = {}\n'.format(sumVol)
             sumVol = 0
+            sumVal = 0
         sumVol += df.iloc[i]['ShortSaleVolume']
         sumVal += df.iloc[i]['ShortSaleValues']
     print(text)
