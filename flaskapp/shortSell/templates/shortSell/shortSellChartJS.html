@@ -29,10 +29,6 @@
 		type: 'candlestick',
 		height: 290,
 		id: 'candles',
-		toolbar: {
-		  autoSelected: 'pan',
-		  show: false
-		}
 	},
 	title: {
 		text: 'CandleStick Chart',
@@ -41,21 +37,24 @@
 	zoom: {
 		  enabled: false
 		},
-	plotOptions: {
-		candlestick: {
-		  colors: {
-			upward: '#3C90EB',
-			downward: '#DF7D46'
-		  }
-		}
-	}, 
+
+	tooltip: {
+		shared: true,
+		custom: [
+		function({seriesIndex, dataPointIndex, w}) {
+		return w.globals.series[seriesIndex][dataPointIndex]},
+		function({ seriesIndex, dataPointIndex, w }) {
+		  var o = w.globals.seriesCandleO[seriesIndex][dataPointIndex]
+		  var h = w.globals.seriesCandleH[seriesIndex][dataPointIndex]
+		  var l = w.globals.seriesCandleL[seriesIndex][dataPointIndex]
+		  var c = w.globals.seriesCandleC[seriesIndex][dataPointIndex]
+		  return ('')}
+		]
+	},
 	xaxis: {
 		type: 'datetime'
 	},
 	yaxis: {
-		tooltip: {
-		  enabled: true
-		},
 		decimalsInFloat: 2,
 	  }
 	};
@@ -175,6 +174,9 @@
 		type: 'datetime',
 		categories: {{dates}},
 	  },
+	  yaxis: {
+		decimalsInFloat: 2,
+	  },
 	  legend: {
 		position: 'right',
 		offsetY: 40
@@ -203,14 +205,13 @@
 		type: 'line',
 	  },
 	  stroke: {
-		width: [0, 4]
+		width: [0, 2]
 	  },
 	  title: {
 		text: 'Short Ratio'
 	  },
 	  dataLabels: {
 		enabled: false,
-		enabledOnSeries: [1]
 	  },
 	labels: {{dates}},
 	xaxis: {
@@ -220,7 +221,7 @@
 	yaxis: [
 		{
 			title: {text: 'Vol',},
-			decimalsInFloat: 0,
+			decimalsInFloat: 2,
 		},
 
 		{	
