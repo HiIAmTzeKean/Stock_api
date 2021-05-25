@@ -4,6 +4,7 @@ from flask import (Blueprint, flash, g, make_response, redirect,
 from flaskapp import db, scheduler
 from flaskapp.models import shortReport, stockPrice, stockTicker
 from flaskapp.initialiser.form import formTickerEdit
+from flaskapp.shortSell.shortSell import shortSellAll
 
 initialiser_bp = Blueprint('initialiser', __name__,
                            template_folder='templates', static_folder='static')
@@ -11,14 +12,14 @@ initialiser_bp = Blueprint('initialiser', __name__,
 
 @initialiser_bp.route('/initialiserHome', methods=('GET', 'POST'))
 def initialiserHome():
-    constituents = ['Ascendas Reit', 'CapitaLand']
-    temp = []
-    records = db.session.query(shortReport.stocks,shortReport.date).limit(5).all()
-    for record in records:
-        for item in constituents:
-            temp.append([record.stocks[item][1],item,record.date])
+    # constituents = ['Ascendas Reit', 'CapitaLand']
+    # temp = []
+    # records = db.session.query(shortReport.stocks,shortReport.date).limit(5).all()
+    # for record in records:
+    #     for item in constituents:
+    #         temp.append([record.stocks[item][1],item,record.date])
     # records = db.session.query(shortReport.stocks['Ascendas Reit'],shortReport.stocks['CapitaLand'],shortReport.date).limit(1).all()
-    print(temp)
+    shortSellAll()
     return render_template('initialiserHome.html')
 
 
