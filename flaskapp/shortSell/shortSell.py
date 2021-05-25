@@ -291,7 +291,7 @@ def shortSellGenerator(ticker):
 @shortSell_bp.route('/shortSellGenerator2/<ticker>', methods=('GET', 'POST'))
 def shortSellGenerator2(ticker):
     import pandas as pd
-    import numpy as np
+    from numpy import transpose
 
     # choosing the stock I want to see
     stock = db.session.query(stockTicker.name).filter_by(ticker=ticker).scalar()
@@ -300,7 +300,7 @@ def shortSellGenerator2(ticker):
     
     # get all short record
     records = db.session.query(shortReport.stocks[stock],shortReport.date).filter(shortReport.stocks[stock].isnot(None)).all()
-    records = np.transpose(records)
+    records = transpose(records)
     vol,val = zip(*records[0])
     record = zip(records[1],vol,val)
     df = pd.DataFrame(record, columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
@@ -325,9 +325,11 @@ def shortSellGenerator2(ticker):
     # get short price
     df2['shortPrice'] = df2['ShortSaleValues'].divide(df2['ShortSaleVolume'],fill_value=0)
     df2['shortRatio'] = df2['ShortSaleVolume'].divide(df2['Volume'],fill_value=0)
+    df2[['Volume', 'ShortSaleVolume']] = df2[['Volume', 'ShortSaleVolume']].divide(1000000)
     df2['shortPrice'].fillna(method='bfill', inplace=True)
     df2['ShortSaleVolume'].fillna(0, inplace=True)
-
+    df2['shortPrice'] = df2['shortPrice'].astype(float).round(2)
+    print(df2)
     return render_template('shortSellChartJS.html',
                         dataOHLC = df2[['Date', 'Open', 'High', 'Low', 'Close']].values.tolist(),
                         dataShortPrice = df2[['Date', 'shortPrice']].values.tolist(),
