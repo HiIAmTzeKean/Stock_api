@@ -19,7 +19,9 @@ def initialiserHome():
     #     for item in constituents:
     #         temp.append([record.stocks[item][1],item,record.date])
     # records = db.session.query(shortReport.stocks['Ascendas Reit'],shortReport.stocks['CapitaLand'],shortReport.date).limit(1).all()
-    shortSellAll()
+    currentTime = datetime.datetime.now().hour
+    if currentTime > 18:
+        shortSellAll()
     return render_template('initialiserHome.html')
 
 
