@@ -13,7 +13,7 @@ shortSell_bp = Blueprint('shortSell', __name__,
                          static_folder='static')
 
 
-def saveShortSell(date):  # date has to be in datetime format
+def saveShortSell(date=datetime.date.today()):  # date has to be in datetime format
     import urllib
     import pandas as pd
     year, month, day = str(date.year), str(date.month), str(date.day)
@@ -64,7 +64,7 @@ def saveShortSell(date):  # date has to be in datetime format
     return
 
 
-def saveSBL(date):  # date has to be in datetime format
+def saveSBL(date=datetime.date.today()):  # date has to be in datetime format
     year, month, day = str(date.year), str(date.month), str(date.day)
     if len(month) == 1: month = month.zfill(2)
     if len(day) == 1: day = day.zfill(2)
@@ -138,8 +138,6 @@ def get_tickerList():
     lt = db.session.query(stockTicker.ticker).filter(
         stockTicker.website != None).all()
     return [item for t in lt for item in t]
-
-
 
 
 # populate DB with the missing short dates
