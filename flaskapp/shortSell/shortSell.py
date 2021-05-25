@@ -288,13 +288,63 @@ def shortSellGenerator(ticker):
     return render_template('shortSellGenerator.html', name='new_plot', myimage=pngImageB64String)
 
 
+@shortSell_bp.route('/shortSellGenerator2/<ticker>', methods=('GET', 'POST'))
+def shortSellGenerator2(ticker):
+    import pandas as pd
+    import numpy as np
+
+    # choosing the stock I want to see
+    stock = db.session.query(stockTicker.name).filter_by(ticker=ticker).scalar()
+    if not stock:
+        return 'Failed'
+    
+    # get all short record
+    records = db.session.query(shortReport.stocks[stock],shortReport.date).filter(shortReport.stocks[stock].isnot(None)).all()
+    records = np.transpose(records)
+    vol,val = zip(*records[0])
+    record = zip(records[1],vol,val)
+    df = pd.DataFrame(record, columns=['Date', 'ShortSaleVolume', 'ShortSaleValues'])
+    
+    # get all price record
+    records = db.session.query(stockPrice.date,
+                               stockPrice.openPrice,
+                               stockPrice.highPrice,
+                               stockPrice.lowPrice,
+                               stockPrice.closePrice,
+                               stockPrice.volume).filter_by(ticker_fk=ticker).all()
+    df2 = pd.DataFrame(records, columns=['Date', 'Open', 'High', 'Low', 'Close', 'Volume'])
+
+    # merge df and df2
+    df2 = df2.merge(df, how='left', on='Date')
+
+    # convert date to datetime 
+    # followed by converting to epoch in micro seconds
+    df2['Date'] = df2['Date'].apply(lambda x: datetime.datetime.combine(x, datetime.time()).timestamp()*1000)
+    df2.sort_values(by=['Date'], ascending=True, inplace=True)
+
+    # get short price
+    df2['shortPrice'] = df2['ShortSaleValues'].divide(df2['ShortSaleVolume'],fill_value=0)
+    df2['shortRatio'] = df2['ShortSaleVolume'].divide(df2['Volume'],fill_value=0)
+    df2['shortPrice'].fillna(method='bfill', inplace=True)
+    df2['ShortSaleVolume'].fillna(0, inplace=True)
+
+    return render_template('shortSellChartJS.html',
+                        dataOHLC = df2[['Date', 'Open', 'High', 'Low', 'Close']].values.tolist(),
+                        dataShortPrice = df2[['Date', 'shortPrice']].values.tolist(),
+                        dataVol = df2[['Date','Volume']].values.tolist(),
+                        dataShortVol = df2[['Date','ShortSaleVolume']].values.tolist(),
+                        dataShortRatio = df2[['Date','shortRatio']].values.tolist(),
+                        dataMinDate = df2['Date'].min(),
+                        dataMaxDate = df2['Date'].max(),
+                        dates=df2[['Date']].values.tolist())
+
 @shortSell_bp.route('/shortSellViewer/', methods=('GET', 'POST'))
 def shortSellViewer():
     form = formTickerChoose()
     tickerList = db.session.query(stockTicker.name, stockTicker.ticker).filter(stockTicker.website!=None).all()
     form.ticker.choices = [(tickerRecord.ticker,tickerRecord.name) for tickerRecord in tickerList]
     if form.validate_on_submit():
-        return redirect(url_for('shortSell.shortSellGenerator', ticker=form.ticker.data))
+        return redirect(url_for('shortSell.shortSellGenerator2', ticker=form.ticker.data))
     return render_template('shortSellViewer.html', form=form)
     
 
