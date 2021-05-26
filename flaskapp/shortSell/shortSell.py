@@ -329,7 +329,7 @@ def shortSellGenerator2(ticker):
     df2['shortPrice'].fillna(method='bfill', inplace=True)
     df2['ShortSaleVolume'].fillna(0, inplace=True)
     df2['shortPrice'] = df2['shortPrice'].astype(float).round(2)
-    print(df2)
+
     return render_template('shortSellChartJS.html',
                         dataOHLC = df2[['Date', 'Open', 'High', 'Low', 'Close']].values.tolist(),
                         dataShortPrice = df2[['Date', 'shortPrice']].values.tolist(),
@@ -346,7 +346,9 @@ def shortSellViewer():
     tickerList = db.session.query(stockTicker.name, stockTicker.ticker).filter(stockTicker.website!=None).all()
     form.ticker.choices = [(tickerRecord.ticker,tickerRecord.name) for tickerRecord in tickerList]
     if form.validate_on_submit():
-        return redirect(url_for('shortSell.shortSellGenerator2', ticker=form.ticker.data))
+        if request.form.get('selection') == 'new':
+            return redirect(url_for('shortSell.shortSellGenerator2', ticker=form.ticker.data))
+        return redirect(url_for('shortSell.shortSellGenerator', ticker=form.ticker.data))
     return render_template('shortSellViewer.html', form=form)
     
 
