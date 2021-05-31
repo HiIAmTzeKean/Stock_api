@@ -36,16 +36,7 @@
 	  },
 	tooltip: {
 		enabledOnSeries: 'candlestick',
-		shared: false,
-		custom: function({series, seriesIndex, dataPointIndex, w}) {
-			return '<div class="box">' +
-			  '<span>Short Price: ' + w.globals.series[seriesIndex][dataPointIndex] + '</span><br>' +
-			  '<span>Open: ' + w.globals.seriesCandleO[seriesIndex][dataPointIndex] + '</span><br>' +
-			  '<span>High: ' + w.globals.seriesCandleH[seriesIndex][dataPointIndex] + '</span><br>' +
-			  '<span>Low: ' + w.globals.seriesCandleL[seriesIndex][dataPointIndex] + '</span><br>' +
-			  '<span>Close: ' + w.globals.seriesCandleC[seriesIndex][dataPointIndex] + '</span><br>' +
-			  '</div>'
-		  },
+		shared: true,
 		x: {
 			show: true,
 			format: 'dd MMM',
@@ -54,7 +45,10 @@
 	},
 	xaxis: {
 		type: 'datetime'
-	}
+	},
+	yaxis: {
+		decimalsInFloat: 3
+	},
 	  };
 	var chart = new ApexCharts(document.querySelector("#chart-candlestick"), options);
 	chart.render();
