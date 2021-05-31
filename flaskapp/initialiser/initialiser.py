@@ -21,7 +21,8 @@ def initialiserHome():
     # records = db.session.query(shortReport.stocks['Ascendas Reit'],shortReport.stocks['CapitaLand'],shortReport.date).limit(1).all()
     currentTime = datetime.datetime.now().hour
     if currentTime > 18:
-        shortSellAll()
+        #shortSellAll()
+        pass
     return render_template('initialiserHome.html')
 
 

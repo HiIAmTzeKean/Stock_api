@@ -58,8 +58,11 @@ def saveShortSell(date=datetime.date.today()):  # date has to be in datetime for
         record = shortReport(date, d)
         db.session.add(record)
         db.session.commit()
-    except (IntegrityError , HTTPError, InvalidRequestError) as e:
-        flash('Shortsell failed to update')
+    except (HTTPError, InvalidRequestError) as e:
+        flash('Shortsell report not yet out')
+        app.logger.error(str(e))
+    except (IntegrityError) as e:
+        flash('Shortsell already updated')
         app.logger.error(str(e))
     return
 
@@ -86,8 +89,12 @@ def saveSBL(date=datetime.date.today()):  # date has to be in datetime format
         record = stockBorrow(date, d)
         db.session.add(record)
         db.session.commit()
-    except (IntegrityError, InvalidRequestError) as e:
+        flash('SBL updated')
+    except (InvalidRequestError) as e:
         flash('SBL failed to update')
+        app.logger.error(str(e))
+    except (IntegrityError) as e:
+        flash('SBL already updated')
         app.logger.error(str(e))
     except:
         return
@@ -120,7 +127,7 @@ def savePrice(ticker_fk):
                             c.iloc[i]['High'],
                             c.iloc[i]['Low'],
                             c.iloc[i]['Close*'],
-                            c.iloc[i]['Volume'])
+                            str(c.iloc[i]['Volume']))
             db.session.add(record)
             db.session.commit()
         except (IntegrityError, DataError, HTTPError, InvalidRequestError, ValueError) as e:
