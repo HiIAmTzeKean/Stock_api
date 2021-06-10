@@ -331,10 +331,10 @@ def shortSellGenerator2(ticker):
 
     # get short price
     df2['shortPrice'] = df2['ShortSaleValues'].divide(df2['ShortSaleVolume'],fill_value=0)
-    df2['shortRatio'] = df2['ShortSaleVolume'].divide(df2['Volume'],fill_value=0)
+    df2['shortRatio'] = df2['ShortSaleVolume'].divide(df2['Volume'])
     df2[['Volume', 'ShortSaleVolume']] = df2[['Volume', 'ShortSaleVolume']].divide(1000000)
     df2['shortPrice'].fillna(method='bfill', inplace=True)
-    df2['ShortSaleVolume'].fillna(0, inplace=True)
+    df2.fillna({'ShortSaleVolume':0,'Volume':0,'shortRatio':0}, inplace=True)
     df2['shortPrice'] = df2['shortPrice'].astype(float).round(3)
 
     return render_template('shortSellChartJS.html',
