@@ -126,22 +126,21 @@ def savePrice(ticker_fk):
         c.columns = c.iloc[0]
         c=c[1:-1]
     
+    # clean data
     c['Date'] = pd.to_datetime(c['Date'])
     c = c.dropna()
-    c.reset_index()
-    #print('I am here now')
+    c.reset_index(inplace = True)
+
     # get dates that are not yet in data base
     last_date = db.session.query(stockPrice.date)\
                   .filter(stockPrice.ticker_fk == ticker_fk)\
                   .order_by(stockPrice.date.desc()).first()
-    #print('this is from DB')
-    #print(last_date)
     if not last_date:
         last_date = datetime.date.today() - datetime.timedelta(days=100)
     else:
     # else if date exist, use the latest date
         last_date = last_date[0]
-    #print(last_date)
+
     for i in range(len(c)):
         if c['Date'][i] <= last_date:
             break
