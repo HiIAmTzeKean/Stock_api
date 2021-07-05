@@ -73,12 +73,14 @@ def saveSBL(date=datetime.date.today()):  # date has to be in datetime format
     if len(day) == 1: day = day.zfill(2)
 
     import requests
-    page = requests.get("https://www1.cdp.sgx.com/sgx-cdp-web/lendingpool/show")
     from bs4 import BeautifulSoup
+    import pandas as pd
+
+    page = requests.get("https://www1.cdp.sgx.com/sgx-cdp-web/lendingpool/show")
     soup = BeautifulSoup(page.content, 'html.parser')
     filein = soup.find(id="lendingpooltable")
-    import pandas as pd
     c = pd.read_html(filein.prettify())[0]
+
     try:
         c.drop(columns=['No.','Security Name','Lending Rate (%)', 'Borrowing Rate (%)'], inplace=True)
         c['Lending Pool'] = pd.to_numeric(c['Lending Pool'], errors='coerce')
@@ -102,38 +104,61 @@ def saveSBL(date=datetime.date.today()):  # date has to be in datetime format
 
 def savePrice(ticker_fk):
     import pandas as pd
-    url = db.session.query(stockTicker.website)\
-            .filter_by(ticker=ticker_fk).scalar()
-    c = pd.read_html(url)[0][:-1]
+    
+    # try using pandas to read table first
+    try:
+        url = db.session.query(stockTicker.website)\
+                .filter_by(ticker=ticker_fk).scalar()
+        c = pd.read_html(url)[0][:-1]
+    # else use beautiful soup to get data
+    except:
+        from requests import get
+        from bs4 import BeautifulSoup
+        page = get(url, headers={'User-Agent': 'Custom'})
+        soup = BeautifulSoup(page.content, 'html.parser')
+        c = []
+        for tr in soup.find("table").children:
+            for td in tr:
+                c.append([])
+                for i in td:
+                    c[-1].append(i.text.replace(',',''))
+        c = pd.DataFrame(c)
+        c.columns = c.iloc[0]
+        c=c[1:-1]
+    
     c['Date'] = pd.to_datetime(c['Date'])
-
+    c = c.dropna()
+    c.reset_index()
+    #print('I am here now')
     # get dates that are not yet in data base
     last_date = db.session.query(stockPrice.date)\
                   .filter(stockPrice.ticker_fk == ticker_fk)\
                   .order_by(stockPrice.date.desc()).first()
+    #print('this is from DB')
+    #print(last_date)
     if not last_date:
         last_date = datetime.date.today() - datetime.timedelta(days=100)
     else:
+    # else if date exist, use the latest date
         last_date = last_date[0]
-    c['Volume'] = pd.to_numeric(c['Volume'], errors='coerce')
+    #print(last_date)
     for i in range(len(c)):
         if c['Date'][i] <= last_date:
             break
         try:
-            float(c.iloc[i]['Open'])
+            # float(c.iloc[i]['Open'])
             record = stockPrice(c.iloc[i]['Date'],
                             ticker_fk,
                             c.iloc[i]['Open'],
                             c.iloc[i]['High'],
                             c.iloc[i]['Low'],
                             c.iloc[i]['Close*'],
-                            str(c.iloc[i]['Volume']))
+                            c.iloc[i]['Volume'])
             db.session.add(record)
             db.session.commit()
         except (IntegrityError, DataError, HTTPError, InvalidRequestError, ValueError) as e:
             app.logger.error(str(e))
             continue
-    return
 
 
 def savePrices(tickerList):
@@ -368,8 +393,8 @@ def shortSellSaveSBL():
 
 @shortSell_bp.route('/shortSellAll/', methods=('GET', 'POST'))
 def shortSellAll():
-    saveSBL(datetime.date.today())
-    db.session.close()
+    #saveSBL(datetime.date.today())
+    #db.session.close()
 
     # part 2
     stockList = get_tickerList()
@@ -378,7 +403,7 @@ def shortSellAll():
     db.session.close()
 
     # part 3
-    saveShortSell(datetime.date.today())
+    #saveShortSell(datetime.date.today())
 
     flash('Done for all')
     return redirect(url_for('initialiser.initialiserHome'))
