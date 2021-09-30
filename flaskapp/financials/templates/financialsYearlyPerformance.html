@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+
+{% block title %}Yearly Report{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<script type="text/javascript">
+    function changeZeroToNull(mylist) {
+        for (var i = 0; i < mylist.length; i++) {
+            if (mylist[i][1] == 0) mylist[i][1] = null;
+        }
+    return mylist;
+    };
+</script>
+{% endblock %}
+
+{% block content %}
+<h3>{{ ticker }}</h3>
+<div>
+<div class='row'>
+    <div class='col'>
+        <div id="chart-line"></div>
+    </div>
+    <div class='col'>
+        <div id="chart-line2"></div>
+    </div>
+</div>
+<div class='row'>
+    <div class='col'>
+        <div id="chart-line3"></div>
+    </div>
+    <div class='col'>
+        <div id="chart-line4"></div>
+    </div>
+</div>
+<div class='row'>
+    <div class='col'>
+        <div id="chart-line5"></div>
+    </div>
+    <div class='col'>
+        <div id="chart-line6"></div>
+    </div>
+</div>
+<div class='row'>
+    <div class='col'>
+        <div id="chart-line7"></div>
+    </div>
+    <div class='col'>
+        <div id="chart-line8"></div>
+    </div>
+</div>
+</div>
+
+
+<script>
+    var options = {
+        series: [
+            {
+                data: changeZeroToNull( {{ roa }} ),
+                name: 'ROA',
+                type: 'line'
+            },
+            {
+                data: changeZeroToNull( {{ net_profit_margin }} ),
+                name: 'Net Profit Margin',
+                type: 'line'
+            },
+            {
+                data: changeZeroToNull( {{ gross_profit_margin }} ),
+                name: 'Gross Profit Margin',
+                type: 'line'
+            },
+            ],
+        chart: {
+            id: 'profitability',
+            group: 'social',
+            type: 'line',
+            height: 200
+        },
+        title: {
+            text: 'profitability',
+        },
+        markers: {
+            size: 3,
+        },
+        stroke: {
+            width: 2
+        },      
+        xaxis: {
+            type: 'datetime',
+            tooltip: {
+                enabled: false,
+                },
+        },
+        tooltip: {
+            x: {
+                show: true,
+                format: 'MM/yy',
+            },
+        },
+        yaxis: {
+            labels: {
+                minWidth: 40
+            },
+            decimalsInFloat: 3,
+            min: 0,
+        },
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chart-line"), options);
+    chart.render();
+</script>
+<script>
+    var optionsLine2 = {
+        series: [
+            {
+                data: {{ gearing }},
+                name: 'Gearing',
+                type: 'line'
+            },
+            {
+                data: {{ equity }},
+                name: 'Equity',
+                type: 'line'
+            },
+            {
+                data: changeZeroToNull( {{ debt_asset }} ),
+                name: 'Debt Asset Ratio',
+                type: 'line'
+            }
+        ],
+        chart: {
+            id: 'debt',
+            group: 'social',
+            type: 'line',
+            height: 200
+        },
+        title: {
+            text: 'Debt',
+        },
+        markers: {
+            size: 3,
+        },
+        stroke: {
+            width: 2
+        },      
+        xaxis: {
+            type: 'datetime',
+            tooltip: {
+                enabled: false,
+            },
+        },
+        tooltip: {
+            x: {
+                show: true,
+                format: 'MM/yy',
+            },
+        },
+        yaxis: {
+            labels: {
+                minWidth: 40
+            },
+            decimalsInFloat: 3,
+        }
+    };
+
+    var chartLine2 = new ApexCharts(document.querySelector("#chart-line2"), optionsLine2);
+    chartLine2.render();
+
+    var optionsLine3 = {
+        series: [
+            {
+                data: changeZeroToNull( {{ asset_turnover }} ),
+                name: 'Asset Turnover',
+                type: 'line'
+            },
+        ],
+        chart: {
+            id: 'management',
+            group: 'social',
+            type: 'line',
+            height: 200
+        },
+        title: {
+            text: 'Management',
+        },
+        markers: {
+            size: 3,
+        },
+        stroke: {
+            width: 2
+        },      
+        colors: ['#008FFB'],
+        xaxis: {
+            type: 'datetime',
+            tooltip: {
+                enabled: false,
+                },
+        },
+        tooltip: {
+            x: {
+                show: true,
+                format: 'MM/yy',
+            },
+        },
+        yaxis: {
+            labels: {
+                minWidth: 40
+            },
+            decimalsInFloat: 3,
+            min: 0,
+        }
+    };
+
+    var chartArea = new ApexCharts(document.querySelector("#chart-line3"), optionsLine3);
+    chartArea.render();
+</script>
+<script>
+    var optionsLine4 = {
+        series: [
+            {
+                data: changeZeroToNull( {{ roc }} ),
+                name: 'ROC',
+                type: 'line'
+            },
+            {
+                data: changeZeroToNull( {{ roe }} ),
+                name: 'ROE',
+                type: 'line'
+            },
+        ],
+        chart: {
+            id: 'investor',
+            group: 'social',
+            type: 'line',
+            height: 200
+        },
+        title: {
+            text: 'Investor',
+        },
+        markers: {
+            size: 3,
+        },
+        stroke: {
+            width: 2
+        },      
+        xaxis: {
+            type: 'datetime',
+            tooltip: {
+                enabled: false,
+                },
+        },
+        tooltip: {
+            x: {
+                show: true,
+                format: 'MM/yy',
+            },
+        },
+        yaxis: {
+            decimalsInFloat: 3,
+        }
+    };
+
+    var chartArea = new ApexCharts(document.querySelector("#chart-line4"), optionsLine4);
+    chartArea.render();
+</script>
+<script>
+    var optionsLine5 = {
+        series: [
+            {
+                data: changeZeroToNull( {{ revenue }} ),
+                name: 'Revenue',
+                type: 'line'
+            },
+            {
+                data: changeZeroToNull( {{ cost }} ),
+                name: 'Cost',
+                type: 'line'
+            },
+        ],
+        chart: {
+            id: 'performance',
+            group: 'social',
+            type: 'line',
+            height: 200
+        },
+        title: {
+            text: 'Performance (millions)',
+        },
+        markers: {
+            size: 3,
+        },
+        stroke: {
+            width: 2
+        },      
+        xaxis: {
+            type: 'datetime',
+            tooltip: {
+                enabled: false,
+                },
+        },
+        tooltip: {
+            x: {
+                show: true,
+                format: 'MM/yy',
+            },
+        },
+        yaxis: {
+            decimalsInFloat: 0,
+        }
+    };
+
+    var chartArea = new ApexCharts(document.querySelector("#chart-line5"), optionsLine5);
+    chartArea.render();
+</script>
+<script>
+    var optionsLine6 = {
+        series: [
+            {
+                data: changeZeroToNull( {{ profit }} ),
+                name: 'Gross Profit',
+                type: 'line'
+            },
+            {
+                data: changeZeroToNull( {{ net_income }} ),
+                name: 'Net Profit before Tax',
+                type: 'line'
+            },
+        ],
+        chart: {
+            id: 'performance',
+            group: 'social',
+            type: 'line',
+            height: 200
+        },
+        title: {
+            text: 'Performance (millions)',
+        },
+        markers: {
+            size: 3,
+        },
+        stroke: {
+            width: 2
+        },      
+        xaxis: {
+            type: 'datetime',
+            tooltip: {
+                enabled: false,
+                },
+        },
+        tooltip: {
+            x: {
+                show: true,
+                format: 'MM/yy',
+            },
+        },
+        yaxis: {
+            decimalsInFloat: 0,
+        }
+    };
+
+    var chartArea = new ApexCharts(document.querySelector("#chart-line6"), optionsLine6);
+    chartArea.render();
+</script>
+<script>
+    var options7 = {
+        series: [
+            {
+                data: {{ financial_leverage }},
+                name: 'Financial Leverage',
+                type: 'line'
+            }
+            ],
+        chart: {
+            id: 'business risk',
+            group: 'social',
+            type: 'line',
+            height: 200
+        },
+        title: {
+            text: 'Buisness Risk',
+        },
+        markers: {
+            size: 3,
+        },
+        stroke: {
+            width: 2
+        },      
+        xaxis: {
+            type: 'datetime',
+            tooltip: {
+                enabled: false,
+                },
+        },
+        tooltip: {
+            x: {
+                show: true,
+                format: 'MM/yy',
+            },
+        },
+        yaxis: {
+            decimalsInFloat: 3,
+            max: 10,
+            min: -10,
+        },
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chart-line7"), options7);
+    chart.render();
+</script>
+{% endblock %}

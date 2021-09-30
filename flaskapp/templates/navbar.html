@@ -9,7 +9,7 @@
     <ul class="navbar-nav mr-auto">
 
       <li class="nav-item active">
-        <a class="nav-link" href="{{ url_for('shortSell.shortSellViewer') }}">Chart</a>
+        <a class="nav-link" href="{{ url_for('charting.chartingViewer') }}">Chart</a>
       </li>
       
       <li class="nav-item">
@@ -22,12 +22,12 @@
           Admin Bar
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="{{ url_for('shortSell.shortSellScheduler') }}">Update Shortsell</a>
+          <a class="dropdown-item" href="{{ url_for('shortSell.shortSellUpdateShort') }}">Update Shortsell</a>
           <a class="dropdown-item" href="{{ url_for('shortSell.shortSellUpdateAllPrice') }}">Update all price</a>
           <a class="dropdown-item" href="{{ url_for('shortSell.shortSellSaveSBL') }}">Update SBL</a>
           <a class="dropdown-item" href="{{ url_for('shortSell.shortSellAll') }}">Update All</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="#">None</a>
+          <a class="dropdown-item" href="{{ url_for('shortSell.shortSellValidatePrice') }}">ValidatePrice</a>
         </div>
       </li>
 

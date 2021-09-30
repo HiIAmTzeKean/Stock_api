@@ -12,37 +12,13 @@ initialiser_bp = Blueprint('initialiser', __name__,
 
 @initialiser_bp.route('/initialiserHome', methods=('GET', 'POST'))
 def initialiserHome():
-    # constituents = ['Ascendas Reit', 'CapitaLand']
-    # temp = []
-    # records = db.session.query(shortReport.stocks,shortReport.date).limit(5).all()
-    # for record in records:
-    #     for item in constituents:
-    #         temp.append([record.stocks[item][1],item,record.date])
-    # records = db.session.query(shortReport.stocks['Ascendas Reit'],shortReport.stocks['CapitaLand'],shortReport.date).limit(1).all()
     currentTime = datetime.datetime.now().hour
     if currentTime > 18:
         shortSellAll()
         pass
     return render_template('initialiserHome.html')
 
-
-# creating once to generate the ticker
-@initialiser_bp.route('/initialiserSellTickerCreator', methods=('GET', 'POST'))
-def initialiserSellTickerCreator():
-    import pandas as pd
-    from pathlib import Path
-
-    filename = url_for('static', filename='SGXsymbol.txt')
-    c = pd.read_csv(str(Path().absolute()) + filename, delimiter="\t")
-
-    for i in range(len(c)):
-        record = stockTicker(
-            name=c.iloc[i]['Description'], ticker=c.iloc[i]['Symbol'])
-        db.session.add(record)
-        db.session.commit()
-    return (str(Path().absolute()) + filename)
-
-
+# add new counters to track
 @initialiser_bp.route('/initialiserChangeName', methods=('GET', 'POST'))
 def initialiserChangeName():
     form = formTickerEdit()
@@ -57,6 +33,20 @@ def initialiserChangeName():
 
     return render_template('initialiserChangeName.html', form=form)
 
+
+def initialiserSellTickerCreator():
+    import pandas as pd
+    from pathlib import Path
+
+    filename = url_for('static', filename='SGXsymbol.txt')
+    c = pd.read_csv(str(Path().absolute()) + filename, delimiter="\t")
+
+    for i in range(len(c)):
+        record = stockTicker(
+            name=c.iloc[i]['Description'], ticker=c.iloc[i]['Symbol'])
+        db.session.add(record)
+        db.session.commit()
+    return (str(Path().absolute()) + filename)
 
 def addISIN():
     import requests

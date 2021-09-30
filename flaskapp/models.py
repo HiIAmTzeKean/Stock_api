@@ -29,6 +29,8 @@ class stockTicker(db.Model):
     website = db.Column(db.String)
 
     prices = db.relationship('stockPrice', back_populates='tickers', cascade="all, delete", passive_deletes=True)
+    quaterlyResults = db.relationship('stockQuaterlyResults', back_populates='tickers', cascade="all, delete", passive_deletes=True)
+    yearlyResults = db.relationship('stockYearlyResults', back_populates='tickers', cascade="all, delete", passive_deletes=True)
 
     def __init__(self, name, ticker):
         self.name = name
@@ -82,6 +84,40 @@ class stockBorrow(db.Model):
     def __repr__(self):
         return '<SBL record {}>'.format(self.date)
 
+
+class stockQuaterlyResults(db.Model):
+    __tablename__ = 'stockQuaterlyResults'
+    tickers = db.relationship('stockTicker', back_populates='quaterlyResults')
+    ticker_fk = db.Column(db.String, db.ForeignKey('stock_ticker.ticker', ondelete="CASCADE"), primary_key=True)
+
+    date = db.Column(db.Date, nullable=False, primary_key=True)
+
+    report = db.Column(JSONB, nullable=False)
+
+    def __init__(self, ticker_fk, date, report):
+        self.ticker_fk = ticker_fk
+        self.date = date
+        self.report = report
+
+    def __repr__(self):
+        return '<quaterlyResults record {}>'.format(self.date)
+
+class stockYearlyResults(db.Model):
+    __tablename__ = 'stockYearlyResults'
+    tickers = db.relationship('stockTicker', back_populates='yearlyResults')
+    ticker_fk = db.Column(db.String, db.ForeignKey('stock_ticker.ticker', ondelete="CASCADE"), primary_key=True)
+
+    date = db.Column(db.Date, nullable=False, primary_key=True)
+
+    report = db.Column(JSONB, nullable=False)
+
+    def __init__(self, ticker_fk, date, report):
+        self.ticker_fk = ticker_fk
+        self.date = date
+        self.report = report
+
+    def __repr__(self):
+        return '<quaterlyResults record {}>'.format(self.date)
 
 class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)

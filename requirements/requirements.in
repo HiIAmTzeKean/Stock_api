@@ -17,3 +17,4 @@ mplfinance
 pandas
 numpy
 gunicorn
+camelot-py[cv]
