@@ -142,7 +142,8 @@ def savePrice(ticker_fk):
 
     # If time is after 6pm then get prices for the day
     # else pop it from the list
-    if datetime.datetime.now().hour < 18:
+
+    if datetime.datetime.now(datetime.timezone.utc).hour < (18-8):
         c = c.iloc[1: , :]
 
     for currentDate in c['Date']:
