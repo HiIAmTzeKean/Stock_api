@@ -103,7 +103,6 @@ def saveSBL(date=datetime.date.today()):  # date has to be in datetime format
 
 
 def savePrice(ticker_fk):
-    print(ticker_fk)
     import pandas as pd
     # try using pandas to read table first
     try:
@@ -132,15 +131,17 @@ def savePrice(ticker_fk):
     c.reset_index(inplace = True)
 
     # get dates that are not yet in data base
+    # else if date exist, use the latest date from db
     last_date = db.session.query(stockPrice.date)\
                   .filter(stockPrice.ticker_fk == ticker_fk)\
                   .order_by(stockPrice.date.desc()).first()
     if not last_date:
         last_date = datetime.date.today() - datetime.timedelta(days=100)
     else:
-    # else if date exist, use the latest date from db
-        last_date = last_date[0]
-    # If time is after 6pm then get prices, else pop it from the list
+        last_date = last_date.date
+
+    # If time is after 6pm then get prices for the day
+    # else pop it from the list
     if datetime.datetime.now().hour < 18:
         c = c.iloc[1: , :]
 
