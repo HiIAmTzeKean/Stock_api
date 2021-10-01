@@ -177,7 +177,7 @@ def get_tickerList():
     return [item for t in lt for item in t]
 
 
-# populate DB with the missing short dates
+
 @shortSell_bp.route('/shortSellValidatePrice', methods=('GET', 'POST'))
 def shortSellValidatePrice(numDays=10):
     flash('Please wait')
@@ -197,13 +197,13 @@ def shortSellValidatePrice(numDays=10):
 # populate DB with the missing short dates
 @shortSell_bp.route('/shortSellUpdateShort', methods=('GET', 'POST'))
 def shortSellUpdateShort():
-    date = datetime.date.today()
-    last_date = db.session.query(shortReport.date).order_by(
-        shortReport.date.desc()).first()[0]
+    todayDate = datetime.date.today()
+    lastDate = db.session.query(shortReport.date).order_by(
+        shortReport.date.desc()).first().date
     
-    while last_date + datetime.timedelta(days=1) <= date:
-        last_date = last_date + datetime.timedelta(days=1)
-        saveShortSell(last_date)
+    while lastDate != todayDate:
+        lastDate = lastDate + datetime.timedelta(days=1)
+        saveShortSell(lastDate)
     flash('Done')
     return redirect(url_for('initialiser.initialiserHome'))
 
