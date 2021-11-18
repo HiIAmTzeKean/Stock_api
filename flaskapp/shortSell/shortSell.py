@@ -22,27 +22,14 @@ def saveShortSell(date=datetime.date.today()):  # date has to be in datetime for
 
     url = "https://api2.sgx.com/sites/default/files/reports/short-sell/{0}/{1}/website_DailyShortSell{0}{1}{2}1815.txt".format(
         year, month, day)
-    try:
-        with urllib.request.urlopen(url) as reader:
-            reader.readline()
-            c = pd.read_fwf(reader, skipfooter=4, engine='python')
-            c.columns = ['Security', 'ShortSaleVolume', 'Curr', 'ShortSaleValue']
-            c.drop(columns=['Curr'], inplace=True)
-        c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
-        c['ShortSaleValue'] = pd.to_numeric(c['ShortSaleValue'], errors='coerce')
-        c = c.dropna()
-        d = dict()
-        for i in range(len(c)):
-            d[c.iloc[i]['Security']] = [float(c.iloc[i]['ShortSaleVolume']),
-                                        float(c.iloc[i]['ShortSaleValue'])]
-        record = shortReport(date, d)
-        db.session.add(record)
-        db.session.commit()
-    except (IntegrityError , HTTPError, InvalidRequestError) as e:
-        app.logger.error(str(e))
     
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0',
+         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+         'Referer': 'https://cssspritegenerator.com',
+         'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+         'Accept-Encoding': 'none',
+         'Accept-Language': 'en-US,en;q=0.8'})
         with urllib.request.urlopen(req) as reader:
             reader.readline()
             c = pd.read_fwf(reader, skipfooter=4, engine='python')
@@ -64,6 +51,26 @@ def saveShortSell(date=datetime.date.today()):  # date has to be in datetime for
     except (IntegrityError) as e:
         flash('Shortsell already updated')
         app.logger.error(str(e))
+    
+    try:
+        with urllib.request.urlopen(url) as reader:
+            reader.readline()
+            c = pd.read_fwf(reader, skipfooter=4, engine='python')
+            c.columns = ['Security', 'ShortSaleVolume', 'Curr', 'ShortSaleValue']
+            c.drop(columns=['Curr'], inplace=True)
+        c['ShortSaleVolume'] = pd.to_numeric(c['ShortSaleVolume'], errors='coerce')
+        c['ShortSaleValue'] = pd.to_numeric(c['ShortSaleValue'], errors='coerce')
+        c = c.dropna()
+        d = dict()
+        for i in range(len(c)):
+            d[c.iloc[i]['Security']] = [float(c.iloc[i]['ShortSaleVolume']),
+                                        float(c.iloc[i]['ShortSaleValue'])]
+        record = shortReport(date, d)
+        db.session.add(record)
+        db.session.commit()
+    except (IntegrityError , HTTPError, InvalidRequestError) as e:
+        app.logger.error(str(e))
+
     return
 
 
@@ -200,8 +207,8 @@ def shortSellUpdateShort():
     todayDate = datetime.date.today()
     lastDate = db.session.query(shortReport.date).order_by(
         shortReport.date.desc()).first().date
-    
     while lastDate != todayDate:
+        print(lastDate)
         lastDate = lastDate + datetime.timedelta(days=1)
         saveShortSell(lastDate)
     flash('Done')
